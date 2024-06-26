@@ -66,54 +66,87 @@ class TopicController extends Controller
             );
         }
     }
-    public function trash()
+    public function action_trash(Request $request)
     {
-        $topics = Topic::where('status', '=', 0)
-            ->orderBy('created_at', 'DESC')
-            ->select('id', 'name', 'slug', 'status')
-            ->paginate(5);
-        $total = Topic::where('status', '!=', 0)->count();
-        $publish = Topic::where('status', '=', 1)->count();
-        $trash = Topic::where('status', '=', 0)->count();
-        return response()->json(
-            [
-                'success' => true, 
-                'message' => 'Tải dữ liệu thành công',
-                'topics' => $topics,
-                'total' => $total,
-                'publish' => $publish,
-            'trash' => $trash,
-            ],
-            200
-        );
+        $listId = $request->input('listId');
+
+        $result = Topic::whereIn('id', $listId)->update(['status' => 0]);
+
+        if ($result > 0) {
+            return response()->json(['message' => 'Thành công'], 200);
+        } else {
+            return response()->json(['message' => 'Không có dòng nào được cập nhật'], 404);
+        }
+    }
+    public function action_destroy(Request $request)
+    {
+        $listId = $request->input('listId');
+
+        $result = Topic::whereIn('id', $listId)->delete();
+
+        if ($result > 0) {
+            return response()->json(['message' => 'Thành công'], 200);
+        } else {
+            return response()->json(['message' => 'Thất bại'], 404);
+        }
     }
 
-    public function index()
+    public function trash(Request $condition)
     {
-        $topics = Topic::where('status', '!=', 0)
+        $query = Topic::where('status', '=', 0)
             ->orderBy('created_at', 'DESC')
-            ->select('id', 'name', 'slug', 'status')
-            ->paginate(5);
-        $topicsAll = Topic::where('status', '!=', 0)
-            ->orderBy('created_at', 'DESC')
-            ->select('id', 'name', 'slug', 'status')
-            ->get();
-        $total = Topic::where('status', '!=', 0)->count();
-        $publish = Topic::where('status', '=', 1)->count();
+            ->select('id', 'name', 'slug', 'status');
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_topic.name', 'like', '%' . $key . '%');
+            });
+        }
+        $total = $query->count();
+        $topics = $query->paginate(8);
         $trash = Topic::where('status', '=', 0)->count();
-        return response()->json(
-            [
-                'success' => true, 
-                'message' => 'Tải dữ liệu thành công',
-                'topics' => $topics,
-                'topicsAll' => $topicsAll,
-                'total' => $total,
-                'publish' => $publish,
+        $publish = Topic::where('status', '=', 1)->count();
+        $result = [
+            'status' => true, 
+            'message' => 'Tải dữ liệu thành công',
+            'topics' => $topics,
+            'total' => $total,
+            'publish' => $publish,
             'trash' => $trash,
-            ],
-            200
-        );
+        ];
+        return response()->json($result,200);
     }
+
+    public function index(Request $condition)
+    {
+        $query = Topic::where('status', '!=', 0)
+        ->orderBy('created_at', 'DESC')
+        ->select('id', 'name', 'slug', 'status');
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_topic.name', 'like', '%' . $key . '%');
+            });
+        }
+        $topicsAll = $query->get(); 
+        $total = $query->count();
+        $topics = $query->paginate(8);
+        $total = $topics->total();
+        $trash = Topic::where('status', '=', 0)->count();
+        $publish = Topic::where('status', '=', 1)->count();
+        $result = [
+            'status' => true, 
+            'message' => 'Tải dữ liệu thành công',
+            'topics' => $topics,
+            'total' => $total,
+            'publish' => $publish,
+            'trash' => $trash,
+            'topicsAll' => $topicsAll,
+        ];
+        return response()->json($result,200);
+
+    }
+
     public function show($id)
     {
         if(is_numeric($id)){

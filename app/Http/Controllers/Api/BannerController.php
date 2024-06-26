@@ -28,18 +28,88 @@ class BannerController extends Controller
             200
         );
     }
-    public function index()
+    public function action_trash(Request $request)
     {
-        $banners = Banner::where('status', '!=', 0)
-        ->orderBy('created_at', 'DESC')
+        $listId = $request->input('listId');
+
+        $result = Banner::whereIn('id', $listId)->update(['status' => 0]);
+
+        if ($result > 0) {
+            return response()->json(['message' => 'Thành công'], 200);
+        } else {
+            return response()->json(['message' => 'Không có dòng nào được cập nhật'], 404);
+        }
+    }
+    public function action_destroy(Request $request)
+    {
+        $listId = $request->input('listId');
+
+        $result = Banner::whereIn('id', $listId)->delete();
+
+        if ($result > 0) {
+            return response()->json(['message' => 'Thành công'], 200);
+        } else {
+            return response()->json(['message' => 'Thất bại'], 404);
+        }
+    }
+
+    public function trash(Request $condition)
+    {
+        $query = Banner::where('status', '=', 0)
         ->select('id', 'name', 'image', 'slug', 'position', 'status' )
-        ->paginate(5);
-        $total = Banner::where('status', '!=', 0)->count();
-        $publish = Banner::where('status', '=', 1)->count();
+        ->orderBy('db_banner.created_at', 'DESC');
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_banner.name', 'like', '%' . $key . '%');
+            });
+        }
+        $total = $query->count();
+        $banners = $query->paginate(8);
+        $total = $banners->total();
         $trash = Banner::where('status', '=', 0)->count();
+        $publish = Banner::where('status', '=', 1)->count();
         return response()->json(
             [
-                'status' => true, 
+                'status' => true,
+                'message' => 'Tải dữ liệu thành công',
+                'banners' => $banners,
+                'total' => $total,
+                'publish' => $publish,
+                'trash' => $trash,
+            ],
+            200
+        );
+    }
+    public function index(Request $condition)
+    {
+        $query = Banner::where('status', '!=', 0)
+        ->select('id', 'name', 'image', 'slug', 'position', 'status' )
+        ->orderBy('db_banner.created_at', 'DESC');
+        
+        if ($condition->input('brandId') != null) {
+            $query->where('brand_id', $condition->input('brandId'));
+        }
+
+        if ($condition->input('catId') != null ) {
+            
+            $query->where('category_id', $condition->input('catId'));
+        }
+
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_banner.name', 'like', '%' . $key . '%');
+            });
+        }
+        $total = $query->count();
+        $banners = $query->paginate(8);
+        $total = $banners->total();
+        $trash = Banner::where('status', '=', 0)->count();
+        $publish = Banner::where('status', '=', 1)->count();
+        return response()->json(
+            [
+                'status' => true,
                 'message' => 'Tải dữ liệu thành công',
                 'banners' => $banners,
                 'total' => $total,
@@ -196,27 +266,6 @@ class BannerController extends Controller
                 422
             );
         }
-    }
-    public function trash()
-    {
-        $banners = Banner::where('status', '=', 0)
-        ->orderBy('created_at', 'DESC')
-        ->select('id', 'name', 'image', 'slug', 'position', 'status' )
-        ->paginate(5);
-        $total = Banner::where('status', '!=', 0)->count();
-        $publish = Banner::where('status', '=', 1)->count();
-        $trash = Banner::where('status', '=', 0)->count();
-        return response()->json(
-            [
-                'status' => true, 
-                'message' => 'Tải dữ liệu thành công',
-                'banners' => $banners,
-                'total' => $total,
-                'publish' => $publish,
-                'trash' => $trash,
-            ],
-            200
-        );
     }
     public function delete($id)
     {

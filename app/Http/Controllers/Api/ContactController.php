@@ -48,49 +48,85 @@ class ContactController extends Controller
             );
         }
     }
-    public function trash()
+    public function action_trash(Request $request)
     {
-        $contacts = Contact::where('status', '=', 0)
-            ->orderBy('created_at', 'DESC')
-            ->select('id', 'name', 'phone', 'email', 'title', 'status')
-            ->paginate(5);
-            $total = Contact::where('status', '!=', 0)->count();
-            $publish = Contact::where('status', '=', 1)->count();
-        $trash = Contact::where('status', '=', 0)->count();
-        return response()->json(
-            [
-                'status' => true, 
-                'message' => 'Tải dữ liệu thành công',
-                'contacts' => $contacts,
-                'total' => $total,
-                'publish' => $publish,
-            'trash' => $trash,
-            ],
-            200
-        );
+        $listId = $request->input('listId');
+
+        $result = Contact::whereIn('id', $listId)->update(['status' => 0]);
+
+        if ($result > 0) {
+            return response()->json(['message' => 'Thành công'], 200);
+        } else {
+            return response()->json(['message' => 'Không có dòng nào được cập nhật'], 404);
+        }
+    }
+    public function action_destroy(Request $request)
+    {
+        $listId = $request->input('listId');
+
+        $result = Contact::whereIn('id', $listId)->delete();
+
+        if ($result > 0) {
+            return response()->json(['message' => 'Thành công'], 200);
+        } else {
+            return response()->json(['message' => 'Thất bại'], 404);
+        }
     }
 
-    public function index()
+    public function trash(Request $condition)
     {
-        $contacts = Contact::where('status', '!=', 0)
+        $query = Contact::where('status', '=', 0)
             ->orderBy('created_at', 'DESC')
-            ->select('id', 'name', 'phone', 'email', 'title', 'status')
-            ->paginate(5);
-        $total = Contact::where('status', '!=', 0)->count();
-        $publish = Contact::where('status', '=', 1)->count();
+            ->select('id', 'name', 'phone', 'email', 'title', 'status');
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_contact.name', 'like', '%' . $key . '%');
+            });
+        }
+        $total = $query->count();
+        $contacts = $query->paginate(8);
+        $total = $contacts->total();
         $trash = Contact::where('status', '=', 0)->count();
-        return response()->json(
-            [
-                'status' => true, 
-                'message' => 'Tải dữ liệu thành công',
-                'contacts' => $contacts,
-                'total' => $total,
-                'publish' => $publish,
-                'trash' => $trash,
-            ],
-            200
-        );
+        $publish = Contact::where('status', '=', 1)->count();
+        $result = [
+            'status' => true, 
+            'message' => 'Tải dữ liệu thành công',
+            'contacts' => $contacts,
+            'total' => $total,
+            'publish' => $publish,
+            'trash' => $trash,
+        ];
+        return response()->json($result,200);
     }
+
+    public function index(Request $condition)
+    {
+        $query = Contact::where('status', '!=', 0)
+        ->orderBy('created_at', 'DESC')
+        ->select('id', 'name', 'phone', 'email', 'title', 'status');
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_contact.name', 'like', '%' . $key . '%');
+            });
+        }
+        $total = $query->count();
+        $contacts = $query->paginate(8);
+        $trash = Contact::where('status', '=', 0)->count();
+        $publish = Contact::where('status', '=', 1)->count();
+        $result = [
+            'status' => true, 
+            'message' => 'Tải dữ liệu thành công',
+            'contacts' => $contacts,
+            'total' => $total,
+            'publish' => $publish,
+            'trash' => $trash,
+        ];
+        return response()->json($result,200);
+
+    }
+
     public function show($id)
     {
         $contact = Contact::find($id);

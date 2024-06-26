@@ -13,40 +13,40 @@ class OrderController extends Controller
 {
     public function doCheckout(Request $request)
     {  
-        $tam = $request->order;
+        $orderData = $request->order;
+        
         $order = new Order();
-        $order->user_id = $tam['user_id']; //form
-        $order->name = $tam['name']; //form
-        $order->phone = $tam['phone']; //form
-        $order->email = $tam['email']; //form
-        $order->address = $tam['address']; //form
-        $order->note = $tam['note']; //form
-        $order->created_at = date('Y-m-d H:i:s');
-        $order->created_by = 1;
-        $order->status = 2; //form
+        $order->user_id = $orderData['user_id']; 
+        $order->name = $orderData['name']; 
+        $order->phone = $orderData['phone']; 
+        $order->email = $orderData['email']; 
+        $order->address = $orderData['address']; 
+        $order->note = $orderData['note']; 
+        $order->created_at = now();
+        $order->created_by = $orderData['user_id'];
         $order->save();
-
-       foreach($request->input('ListCart')  as  $row){
-            $orderDetail= new OrderDetail();
-            $orderDetail->order_id= $order->id;
-            $orderDetail->product_id=$row['id'];
-            $orderDetail->price=$row['price'];
-            $orderDetail->qty=$row['quantity'];
-            $orderDetail->save();
-       }
-
-       Mail::mailer('smtp')->to($order->email)->send(new MyEmail($order));
-
-       return response()->json(
-        [
+    
+        foreach ($request->ListCart as $item) {
+            DB::table('db_orderdetail')->insert([
+                'order_id' => $order->id,
+                'product_id' => $item['product_id'],
+                'variant_id' => $item['variant_id'],
+                'price' => $item['price'],
+                'qty' => $item['quantity'],
+                'cost' => $item['cost'],
+                'created_at' => now(),
+            ]);
+        }
+    
+        Mail::to($orderData[$order->email])->send(new MyEmail($order));
+    
+        return response()->json([
             'status' => true,
             'message' => 'Đặt hàng thành công',
-            'order' => null,
-        ],
-        200
-    );
+            'order' => $order,
+        ], 200);
     }
-
+    
     public function order_userId($user_id)
     {
         $args = [
@@ -103,49 +103,85 @@ class OrderController extends Controller
             );
         }
     }
-    public function trash()
+    public function action_trash(Request $request)
     {
-        $orders = Order::where('status', '=', 0)
-        ->orderBy('created_at', 'DESC')
-        ->select('id', 'user_id', 'phone', 'email', 'created_at', 'status' )
-        ->paginate(5);
-        $total = Order::where('status', '!=', 0)->count();
-        $publish = Order::where('status', '=', 1)->count();
-        $trash = Order::where('status', '=', 0)->count();
-        return response()->json(
-            [
-                'success' => true, 
-                'message' => 'Tải dữ liệu thành công',
-                'orders' => $orders,
-                'total' => $total,
-                'publish' => $publish,
-            'trash' => $trash,
-            ],
-            200
-        );
+        $listId = $request->input('listId');
+
+        $result = Order::whereIn('id', $listId)->update(['status' => 0]);
+
+        if ($result > 0) {
+            return response()->json(['message' => 'Thành công'], 200);
+        } else {
+            return response()->json(['message' => 'Không có dòng nào được cập nhật'], 404);
+        }
+    }
+    public function action_destroy(Request $request)
+    {
+        $listId = $request->input('listId');
+
+        $result = Order::whereIn('id', $listId)->delete();
+
+        if ($result > 0) {
+            return response()->json(['message' => 'Thành công'], 200);
+        } else {
+            return response()->json(['message' => 'Thất bại'], 404);
+        }
     }
 
-    public function index()
+    public function trash(Request $condition)
     {
-        $orders = Order::where('status', '!=', 0)
-        ->orderBy('created_at', 'DESC')
-        ->select('id', 'user_id', 'phone', 'email', 'created_at', 'status' )
-        ->paginate(5);
-        $total = Order::where('status', '!=', 0)->count();
-        $publish = Order::where('status', '=', 1)->count();
+        $query = Order::where('status', '=', 0)
+            ->orderBy('created_at', 'DESC')
+            ->select('id', 'user_id', 'phone', 'email', 'created_at', 'status' );
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_order.name', 'like', '%' . $key . '%');
+            });
+        }
+        $total = $query->count();
+        $orders = $query->paginate(8);
+        $total = $orders->total();
         $trash = Order::where('status', '=', 0)->count();
-        return response()->json(
-            [
-                'success' => true, 
-                'message' => 'Tải dữ liệu thành công',
-                'orders' => $orders,
-                'total' => $total,
-                'publish' => $publish,
+        $publish = Order::where('status', '=', 1)->count();
+        $result = [
+            'status' => true, 
+            'message' => 'Tải dữ liệu thành công',
+            'orders' => $orders,
+            'total' => $total,
+            'publish' => $publish,
             'trash' => $trash,
-            ],
-            200
-        );
+        ];
+        return response()->json($result,200);
     }
+
+    public function index(Request $condition)
+    {
+        $query = Order::where('status', '!=', 0)
+        ->orderBy('created_at', 'DESC')
+        ->select('id', 'user_id', 'phone', 'email', 'created_at', 'status' );
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_order.name', 'like', '%' . $key . '%');
+            });
+        }
+        $total = $query->count();
+        $orders = $query->paginate(8);
+        $trash = Order::where('status', '=', 0)->count();
+        $publish = Order::where('status', '=', 1)->count();
+        $result = [
+            'status' => true, 
+            'message' => 'Tải dữ liệu thành công',
+            'orders' => $orders,
+            'total' => $total,
+            'publish' => $publish,
+            'trash' => $trash,
+        ];
+        return response()->json($result,200);
+
+    }
+
     public function show($id)
     {
         $orders = array();

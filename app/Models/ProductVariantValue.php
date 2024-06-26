@@ -9,7 +9,7 @@ use App\Models\ProductAttributeValue;
 class ProductVariantValue extends Model
 {
     use HasFactory;
-    protected $table = 'db_product_variant';
+    protected $table = 'db_product_variant_value';
     protected $with = ['product_attribute_values'];
 
     public function product_attribute_values()

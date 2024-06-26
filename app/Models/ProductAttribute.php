@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ProductAttributeValue;
 
-class ProductAttributes extends Model
+class ProductAttribute extends Model
 {
     use HasFactory;
     protected $table = 'db_product_attribute';

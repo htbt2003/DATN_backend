@@ -214,49 +214,89 @@ class PostController extends Controller
             );
         }
     }
-    public function trash()
+    public function action_trash(Request $request)
     {
-        $posts = Post::where([['status', '=', 0], ['type', '=', 'post']])
-            ->orderBy('created_at', 'DESC')
-            ->select('id', 'title', 'slug', 'topic_id', 'image', 'status' )
-            ->paginate(5);
-        $total = Post::where([['status', '=', 0], ['type', '=', 'post']])->count();
-        $publish = Post::where('status', '=', 1)->count();
-        $trash = Post::where('status', '=', 0)->count();
-        return response()->json(
-            [
-                'status' => true, 
-                'message' => 'Tải dữ liệu thành công',
-                'posts' => $posts,
-                'total' => $total,
-                'publish' => $publish,
-            'trash' => $trash,
-            ],
-            200
-        );
+        $listId = $request->input('listId');
+
+        $result = Post::whereIn('id', $listId)->update(['status' => 0]);
+
+        if ($result > 0) {
+            return response()->json(['message' => 'Thành công'], 200);
+        } else {
+            return response()->json(['message' => 'Không có dòng nào được cập nhật'], 404);
+        }
+    }
+    public function action_destroy(Request $request)
+    {
+        $listId = $request->input('listId');
+
+        $result = Post::whereIn('id', $listId)->delete();
+
+        if ($result > 0) {
+            return response()->json(['message' => 'Thành công'], 200);
+        } else {
+            return response()->json(['message' => 'Thất bại'], 404);
+        }
     }
 
-    public function index()
+    public function trash(Request $condition)
     {
-        $posts = Post::where([['status', '!=', 0], ['type', '=', 'post']])
-            ->orderBy('created_at', 'DESC')
-            ->select('id', 'title', 'slug', 'topic_id', 'image', 'status' )
-            ->paginate(5);
-        $total = Post::where([['status', '!=', 0], ['type', '=', 'post']])->count();
+        $query = Post::where([['db_post.status', '=', 0], ['db_post.type', '=', 'post']])
+            ->orderBy('db_post.created_at', 'DESC')
+            ->leftJoin('db_topic', 'db_post.topic_id','db_topic.id')
+            ->select('db_post.id', 'db_post.title', 'db_post.slug', 'db_post.topic_id', 'db_post.image', 'db_post.status', 'db_topic.name as topicname' );
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_post.title', 'like', '%' . $key . '%')
+                    ->orWhere('db_topic.name', 'like', '%' . $key . '%');
+            });
+        }
+        $total = $query->count();
+        $posts = $query->paginate(8);
         $publish = Post::where([['status', '=', 1], ['type', '=', 'post']])->count();
         $trash = Post::where([['status', '=', 0], ['type', '=', 'post']])->count();
-        return response()->json(
-            [
-                'status' => true, 
-                'message' => 'Tải dữ liệu thành công',
-                'posts' => $posts,
-                'total' => $total,
-                'publish' => $publish,
+        $result = [
+            'status' => true, 
+            'message' => 'Tải dữ liệu thành công',
+            'posts' => $posts,
+            'total' => $total,
+            'publish' => $publish,
             'trash' => $trash,
-            ],
-            200
-        );
+        ];
+        return response()->json($result,200);
     }
+
+    public function index(Request $condition)
+    {
+        $query = Post::where([['db_post.status', '!=', 0], ['db_post.type', '=', 'post']])
+        ->orderBy('db_post.created_at', 'DESC')
+        ->leftJoin('db_topic', 'db_post.topic_id','db_topic.id')
+        ->select('db_post.id', 'db_post.title', 'db_post.slug', 'db_post.topic_id', 'db_post.image', 'db_post.status', 'db_topic.name as topicname' );
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_post.title', 'like', '%' . $key . '%')
+                    ->orWhere('db_topic.name', 'like', '%' . $key . '%');
+            });
+        }
+        $postsAll = $query->get(); 
+        $total = $query->count();
+        $posts = $query->paginate(8);
+        $publish = Post::where([['status', '=', 1], ['type', '=', 'post']])->count();
+        $trash = Post::where([['status', '=', 0], ['type', '=', 'post']])->count();
+        $result = [
+            'status' => true, 
+            'message' => 'Tải dữ liệu thành công',
+            'posts' => $posts,
+            'total' => $total,
+            'publish' => $publish,
+            'trash' => $trash,
+            'postsAll' => $postsAll,
+        ];
+        return response()->json($result,200);
+    }
+
     public function show($id)
     {
         if(is_numeric($id)){

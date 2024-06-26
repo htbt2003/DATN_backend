@@ -108,49 +108,90 @@ class UserController extends Controller
             );
         }
     }
-    public function trash()
+    public function action_trash(Request $request)
     {
-        $users = User::where([['status', '=', 0], ['roles', '=', 'user']])
-        ->orderBy('created_at', 'DESC')
-        ->select('id', 'name', 'phone', 'email', 'image', 'status')
-        ->paginate(5);
-        $total = User::where([['status', '!=', 0], ['roles', '=', 'user']])->count();
-        $publish = User::where([['status', '=', 1], ['roles', '=', 'user']])->count();
-        $trash = User::where([['status', '=', 0], ['roles', '=', 'user']])->count();
-        return response()->json(
-            [
-                'status' => true, 
-                'message' => 'Tải dữ liệu thành công',
-                'users' => $users,
-                'total' => $total,
-                'publish' => $publish,
-            'trash' => $trash,
-            ],
-            200
-        );
+        $listId = $request->input('listId');
+
+        $result = User::whereIn('id', $listId)->update(['status' => 0]);
+
+        if ($result > 0) {
+            return response()->json(['message' => 'Thành công'], 200);
+        } else {
+            return response()->json(['message' => 'Không có dòng nào được cập nhật'], 404);
+        }
+    }
+    public function action_destroy(Request $request)
+    {
+        $listId = $request->input('listId');
+
+        $result = User::whereIn('id', $listId)->delete();
+
+        if ($result > 0) {
+            return response()->json(['message' => 'Thành công'], 200);
+        } else {
+            return response()->json(['message' => 'Thất bại'], 404);
+        }
     }
 
-    public function index()
+    public function trash(Request $condition)
     {
-        $users = User::where([['status', '!=', 0], ['roles', '=', 'user']])
-        ->orderBy('created_at', 'DESC')
-        ->select('id', 'name', 'phone', 'email', 'image', 'status')
-        ->paginate(5);
-        $total = User::where([['status', '!=', 0], ['roles', '=', 'user']])->count();
-        $publish = User::where('status', '=', 1)->count();
-        $trash = User::where('status', '=', 0)->count();
-        return response()->json(
-            [
-                'status' => true, 
-                'message' => 'Tải dữ liệu thành công',
-                'users' => $users,
-                'total' => $total,
-                'publish' => $publish,
+        $query = User::where([['status', '!=', 0], ['roles', '=', 'user']])
+            ->orderBy('created_at', 'DESC')
+            ->select('id', 'name', 'phone', 'email', 'image', 'status');
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_user.name', 'like', '%' . $key . '%')
+                    ->orWhere('db_user.email', 'like', '%' . $key . '%')
+                    ->orWhere('db_user.phone', 'like', '%' . $key . '%');
+            });
+        }
+        $total = $query->count();
+        $users = $query->paginate(8);
+        $publish = User::where([['status', '=', 1], ['roles', '=', 'user']])->count();
+        $trash = User::where([['status', '=', 0], ['roles', '=', 'user']])->count();
+        $result = [
+            'status' => true, 
+            'message' => 'Tải dữ liệu thành công',
+            'users' => $users,
+            'total' => $total,
+            'publish' => $publish,
             'trash' => $trash,
-            ],
-            200
-        );
+        ];
+        return response()->json($result,200);
     }
+
+    public function index(Request $condition)
+    {
+        $query = User::where([['status', '!=', 0], ['roles', '=', 'user']])
+        ->orderBy('created_at', 'DESC')
+        ->select('id', 'name', 'phone', 'email', 'image', 'status');
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_user.name', 'like', '%' . $key . '%')
+                    ->orWhere('db_user.email', 'like', '%' . $key . '%')
+                    ->orWhere('db_user.phone', 'like', '%' . $key . '%');
+            });
+        }
+        $usersAll = $query->get(); 
+        $total = $query->count();
+        $users = $query->paginate(8);
+        $publish = User::where([['status', '=', 1], ['roles', '=', 'user']])->count();
+        $trash = User::where([['status', '=', 0], ['roles', '=', 'user']])->count();
+        $result = [
+            'status' => true, 
+            'message' => 'Tải dữ liệu thành công',
+            'users' => $users,
+            'total' => $total,
+            'publish' => $publish,
+            'trash' => $trash,
+            'usersAll' => $usersAll,
+        ];
+        return response()->json($result,200);
+
+    }
+
     public function show($id)
     {
         $user = User::find($id);

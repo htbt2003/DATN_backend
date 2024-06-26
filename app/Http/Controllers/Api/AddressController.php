@@ -4,117 +4,335 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Address;
 
 class AddressController extends Controller
 {
-    public function __construct()
+    public function action_trash(Request $request)
     {
-        $this->middleware('auth:api', ['except' => ['login', 'register', 'doCheckout']]);
-    }
+        $listId = $request->input('listId');
 
-    /**
-     * Get a JWT via given credentials.
-     
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function login()
-    {
-        $credentials = request(['email', 'password']);
+        $result = Address::whereIn('id', $listId)->update(['status' => 0]);
 
-        if (! $token = auth()->attempt($credentials)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+        if ($result > 0) {
+            return response()->json(['message' => 'Thành công'], 200);
+        } else {
+            return response()->json(['message' => 'Không có dòng nào được cập nhật'], 404);
         }
-
-        return $this->respondWithToken($token);
     }
-    public function register(Request $request)
+    public function action_destroy(Request $request)
     {
-        // $request->validate([
-        //     'name' => 'required|string|max:255',
-        //     'email' => 'required|email|unique:users,email',
-        //     'password' => 'required|string|min:6',
-        // ]);
+        $listId = $request->input('listId');
 
-        // $user = new User([
-        //     'name' => $request->input('name'),
-        //     'email' => $request->input('email'),
-        //     'password' => Hash::make($request->input('password')),
-        // ]);
-        $user = new User();
-        $user->name = $request->name; //form
-        $user->gender = $request->gender; //form
-        $user->email = $request->email; //form
-        $user->phone = $request->phone; //form
-        $user->username = $request->username; //form
-        $user->password = Hash::make($request->password); //form
-        $user->address = $request->address; //form
-        $user->roles = $request->roles; //form
-        $user->image = $request->image; 
-        $user->created_at = date('Y-m-d H:i:s');
-        $user->created_by = 1;
-        $user->status = $request->status; //form
-        $user->save();
+        $result = Address::whereIn('id', $listId)->delete();
 
+        if ($result > 0) {
+            return response()->json(['message' => 'Thành công'], 200);
+        } else {
+            return response()->json(['message' => 'Thất bại'], 404);
+        }
+    }
+
+    public function index(Request $condition)
+    {
+        
+        $query = Address::where('status', '!=', 0)
+        ->select('id', 'name', 'phone', 'address', 'status' )
+        ->orderBy('db_address.created_at', 'DESC');
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_address.name', 'like', '%' . $key . '%');
+            });
+        }
+        $total = $query->count();
+        $addresses = $query->paginate(8);
+        $total = $addresses->total();
+        $trash = Address::where('status', '=', 0)->count();
+        $publish = Address::where('status', '=', 1)->count();
         return response()->json(
             [
                 'status' => true,
-                'message' => 'Đăng ký thành công',
-                'user' => $user
+                'message' => 'Tải dữ liệu thành công',
+                'addresses' => $addresses,
+                'total' => $total,
+                'publish' => $publish,
+                'trash' => $trash,
             ],
-            201
-        );    
+            200
+        );
     }
-    /**
-     * Get the authenticated User.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function me()
+    public function changeStatus($id)
     {
-        return response()->json(auth()->user());
+        $address = Address::find($id);
+        if($address == null)//Luuu vao CSDL
+        {
+            return response()->json(
+                [
+                    'status' => false, 
+                    'message' => 'Không tìm thấy dữ liệu', 
+                    'address' => null
+                ],
+                404
+            );    
+        }
+        $address->updated_at = date('Y-m-d H:i:s');
+        $address->updated_by = 1;
+        $address->status = ($address->status == 1) ? 2 : 1; //form
+        if($address->save())//Luuu vao CSDL
+        {
+            return response()->json(
+                [
+                    'status' => true, 
+                    'message' => 'Cập nhật dữ liệu thành công', 
+                    'address' => $address
+                ],
+                201
+            );    
+        }
+        else
+        {
+            return response()->json(
+                [
+                    'status' => false, 
+                    'message' => 'Cập nhật dữ liệu không thành công', 
+                    'address' => null
+                ],
+                422
+            );
+        }
     }
 
-    /**
-     * Log the user out (Invalidate the token).
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function logout()
+    public function show($id)
     {
-        auth()->logout();
-
-        return response()->json(['message' => 'Successfully logged out']);
+        $address = Address::find($id);
+        return response()->json(
+            ['status' => true, 'message' => 'Tải dữ liệu thành công', 'address' => $address],
+            200
+        );
+    }
+    public function store(Request $request)
+    {
+        $address = new address();
+        $address->name = $request->name; //form
+        $address->description = $request->description; //form
+        // $address->link = $request->link; //form
+        $address->position = $request->position; //form
+        $slug = Str::of($request->name)->slug('-');
+        //upload image
+        $files = $request->image;
+        if ($files != null) {
+            $extension = $files->getClientOriginalExtension();
+            if (in_array($extension, ['jpg', 'png', 'gif', 'webp', 'jpeg'])) {
+                $filename = date('YmdHis') . '.' . $extension;
+                $address->image = $filename;
+                $files->move(public_path('images/address'), $filename);
+            }
+        }
+        $address->created_at = date('Y-m-d H:i:s');
+        $address->created_by = 1;
+        $address->status = $request->status; //form
+        if($address->save())//Luuu vao CSDL
+        {
+            return response()->json(
+                [
+                    'status' => true, 
+                    'message' => 'Thêm thành công', 
+                    'address' => $address
+                ],
+                201
+            );    
+        }
+        else
+        {
+            return response()->json(
+                [
+                    'status' => false, 
+                    'message' => 'Thêm không thành công', 
+                    'address' => null
+                ],
+                422
+            );
+        }
+    }
+    public function update(Request $request, $id)
+    {
+        $address = Address::find($id);
+        if($address == null)
+        {
+            return response()->json(
+                [
+                    'status' => false, 
+                    'message' => 'Không tìm thấy dữ liệu', 
+                    'address' => null
+                ],
+                404
+            );    
+        }
+        $address->name = $request->name; //form
+        $address->description = $request->description; //form
+        // $address->link = $request->link; //form
+        $address->position = $request->position; //form
+        $slug = Str::of($request->name)->slug('-');
+        //upload image
+        $files = $request->image;
+        if ($files != null) {
+            $extension = $files->getClientOriginalExtension();
+            if (in_array($extension, ['jpg', 'png', 'gif', 'webp', 'jpeg'])) {
+                $filename = date('YmdHis') . '.' . $extension;
+                $address->image = $filename;
+                $files->move(public_path('images/address'), $filename);
+            }
+        }
+        $address->updated_at = date('Y-m-d H:i:s');
+        $address->updated_by = 1;
+        $address->status = $request->status; //form
+        if($address->save())//Luuu vao CSDL
+        {
+            return response()->json(
+                [
+                    'status' => true, 
+                    'message' => 'Cập nhật dữ liệu thành công', 
+                    'address' => $address
+                ],
+                201
+            );    
+        }
+        else
+        {
+            return response()->json(
+                [
+                    'status' => false, 
+                    'message' => 'Cập nhật dữ liệu không thành công', 
+                    'address' => null
+                ],
+                422
+            );
+        }
+    }
+    public function trash(Request $condition)
+    {
+        $query = Address::where('status', '!=', 0)
+        ->select('id', 'name', 'phone', 'address', 'status' )
+        ->orderBy('db_address.created_at', 'DESC');
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_address.name', 'like', '%' . $key . '%');
+            });
+        }
+        $total = $query->count();
+        $addresses = $query->paginate(8);
+        $total = $addresses->total();
+        $trash = Address::where('status', '=', 0)->count();
+        $publish = Address::where('status', '=', 1)->count();
+        return response()->json(
+            [
+                'status' => true,
+                'message' => 'Tải dữ liệu thành công',
+                'addresses' => $addresses,
+                'total' => $total,
+                'publish' => $publish,
+                'trash' => $trash,
+            ],
+            200
+        );
+    }
+    public function delete($id)
+    {
+        $address = Address::find($id);
+        if($address == null)//Luuu vao CSDL
+        {
+            return response()->json(
+                [
+                    'status' => false, 
+                    'message' => 'Đã chuyển vào thùng rác', 
+                    'address' => null
+                ],
+                404
+            );    
+        }
+        $address->updated_at = date('Y-m-d H:i:s');
+        $address->updated_by = 1;
+        $address->status = 0; 
+        if($address->save())//Luuu vao CSDL
+        {
+            return response()->json(
+                [
+                    'status' => true, 
+                    'message' => 'Xoá thành công', 
+                    'address' => $address
+                ],
+                201
+            );    
+        }
+    }
+    public function restore($id)
+    {
+        $address =Address::find($id);
+        if($address == null)//Luuu vao CSDL
+        {
+            return response()->json(
+                [
+                    'status' => false, 
+                    'message' => 'Không tìm thấy dữ liệu', 
+                    'address' => null
+                ],
+                404
+            );    
+        }
+        $address->updated_at = date('Y-m-d H:i:s');
+        $address->updated_by = 1;
+        $address->status = 2; 
+        if($address->save())//Luuu vao CSDL
+        {
+            return response()->json(
+                [
+                    'status' => true, 
+                    'message' => 'Khôi phục thành công', 
+                    'address' => $address
+                ],
+                201
+            );    
+        }
     }
 
-    /**
-     * Refresh a token.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function refresh()
+    public function destroy($id)
     {
-        return $this->respondWithToken(auth()->refresh());
-    }
-
-    /**
-     * Get the token array structure.
-     *
-     * @param  string $token
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    protected function respondWithToken($token)
-    {
-        return response()->json([
-            'status' => true,
-            'message' => 'Đăng nhập thành công',
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 60,
-            'user' => auth()->user(),
-        ]);
+        $address =Address::findOrFail($id);
+        if($address == null)
+        {
+            return response()->json(
+                [
+                    'status' => false, 
+                    'message' => 'Không tìm thấy dữ liệu', 
+                    'address' => null
+                ],
+               404 
+            );    
+        }
+        if($address->delete())
+        {
+            return response()->json(
+                [
+                    'status' => true,
+                    'message' => 'Xóa thành công',
+                    'address' => $address
+                ],
+                200
+            );    
+        }
+        else
+        {
+            return response()->json(
+                [
+                    'status' => false,
+                    'message' => 'Xóa không thành công',
+                    'address' => null
+                ],
+                422
+            );    
+        }
     }
 
 }

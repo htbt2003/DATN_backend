@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Menu;
-use App\Models\Brand;
+use App\Models\menu;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\Topic;
@@ -116,85 +116,86 @@ class MenuController extends Controller
                 422
             );
         }
-    }
-    public function trash()
+    }    public function action_trash(Request $request)
     {
-        $menus = Menu::where('status', '=', 0)
-            ->orderBy('created_at', 'DESC')
-            ->select('id', 'name', 'link', 'position', 'status' )
-            ->paginate(5);
-        $menusAll = Menu::where('status', '=', 0)
-            ->orderBy('created_at', 'DESC')
-            ->select('id', 'name', 'link', 'position', 'status' )
-            ->get();
-        $total = Menu::where('status', '!=', 0)->count();
-        $publish = Menu::where('status', '=', 1)->count();
-        $trash = Menu::where('status', '=', 0)->count();
-        return response()->json(
-            [
-                'status' => true, 
-                'message' => 'Tải dữ liệu thành công',
-                'menus' => $menus,
-                'menusAll' => $menusAll,
-                'total' => $total,
-                'publish' => $publish,
-            'trash' => $trash,
-            ],
-            200
-        );
+        $listId = $request->input('listId');
+
+        $result = Menu::whereIn('id', $listId)->update(['status' => 0]);
+
+        if ($result > 0) {
+            return response()->json(['message' => 'Thành công'], 200);
+        } else {
+            return response()->json(['message' => 'Không có dòng nào được cập nhật'], 404);
+        }
+    }
+    public function action_destroy(Request $request)
+    {
+        $listId = $request->input('listId');
+
+        $result = Menu::whereIn('id', $listId)->delete();
+
+        if ($result > 0) {
+            return response()->json(['message' => 'Thành công'], 200);
+        } else {
+            return response()->json(['message' => 'Thất bại'], 404);
+        }
     }
 
-    public function index()
+    public function trash(Request $condition)
     {
-        $menus = Menu::where('status', '!=', 0)
+        $query = Menu::where('status', '=', 0)
             ->orderBy('created_at', 'DESC')
-            ->select('id', 'name', 'link', 'position', 'status' )
-            ->paginate(5);
-        $menusAll = Menu::where('status', '!=', 0)
-            ->orderBy('created_at', 'DESC')
-            ->select('id', 'name', 'link', 'position', 'status' )
-            ->get(0);
-        $categoryies = Menu::where([['type', '=', 'danh-muc-san-pham'],['status', '!=', 0]])
-            ->orderBy('created_at', 'DESC')
-            ->select('id', 'name', 'link', 'position', 'status' )
-            ->get();
-        $brands = Menu::where([['type', '=', 'thuong-hieu'],['status', '!=', 0]])
-            ->orderBy('created_at', 'DESC')
-            ->select('id', 'name', 'link', 'position', 'status' )
-            ->get();
-        $pages = Menu::where([['type', '=', 'trang-don'],['status', '!=', 0]])
-            ->orderBy('created_at', 'DESC')
-            ->select('id', 'name', 'link', 'position', 'status' )
-            ->get();
-        $topics = Menu::where([['type', '=', 'chu-de-bai-viet'],['status', '!=', 0]])
-            ->orderBy('created_at', 'DESC')
-            ->select('id', 'name', 'link', 'position', 'status' )
-            ->get();
-        $options = Menu::where([['type', '=', 'tuy-bien'],['status', '!=', 0]])
-            ->orderBy('created_at', 'DESC')
-            ->select('id', 'name', 'link', 'position', 'status' )
-            ->get();
-        $total = Menu::where('status', '!=', 0)->count();
-        $publish = Menu::where('status', '=', 1)->count();
+            >select('id', 'name', 'link', 'position', 'status' );
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_menu.name', 'like', '%' . $key . '%');
+            });
+        }
+        $total = $query->count();
+        $menus = $query->paginate(8);
         $trash = Menu::where('status', '=', 0)->count();
-        return response()->json(
-            [
-                'status' => true, 
-                'message' => 'Tải dữ liệu thành công',
-                'menus' => $menus,
-                'menusAll' => $menusAll,
-                'categoryies' => $categoryies,
-                'brands' => $brands,
-                'pages' => $pages,
-                'topics' => $topics,
-                'options' => $options,
-                'total' => $total,
-                'publish' => $publish,
-                'trash' => $trash,
-            ],
-            200
-        );
+        $publish = Menu::where('status', '=', 1)->count();
+        $result = [
+            'status' => true, 
+            'message' => 'Tải dữ liệu thành công',
+            'menus' => $menus,
+            'total' => $total,
+            'publish' => $publish,
+            'trash' => $trash,
+        ];
+        return response()->json($result,200);
     }
+
+    public function index(Request $condition)
+    {
+        $query = Menu::where('status', '!=', 0)
+        ->orderBy('created_at', 'DESC')
+        >select('id', 'name', 'link', 'position', 'status' );
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_menu.name', 'like', '%' . $key . '%');
+            });
+        }
+        $menusAll = $query->get(); 
+        $total = $query->count();
+        $menus = $query->paginate(8);
+        $trash = Menu::where('status', '=', 0)->count();
+        $publish = Menu::where('status', '=', 1)->count();
+        $result = [
+            'status' => true, 
+            'message' => 'Tải dữ liệu thành công',
+            'menus' => $menus,
+            'total' => $total,
+            'publish' => $publish,
+            'trash' => $trash,
+            'menusAll' => $menusAll,
+        ];
+        return response()->json($result,200);
+
+    }
+
     public function show($id)
     {
         $menu = Menu::find($id);
@@ -230,10 +231,10 @@ class MenuController extends Controller
             case "thuong-hieu":
                 foreach($listid as $id)
                 {
-                    $brand = Brand::find($id);
+                    $menu = Menu::find($id);
                     $menu = new Menu();
-                    $menu->name = $brand->name;
-                    $menu->link = '/thuong-hieu/'.$brand->slug; 
+                    $menu->name = $menu->name;
+                    $menu->link = '/thuong-hieu/'.$menu->slug; 
                     $menu->parent_id = 0;
                     $menu->type = $request->type;
                     $menu->created_at = date('Y-m-d H:i:s');
@@ -249,7 +250,7 @@ class MenuController extends Controller
                     {
                         $topic = Topic::find($id);
                         $menu = new Menu();
-                        $menu->name = $brand->name;
+                        $menu->name = $menu->name;
                         $menu->link = '/chu-de-bai-viet/'.$topic->slug; 
                         $menu->parent_id = 0;
                         $menu->type = $request->type;
@@ -266,7 +267,7 @@ class MenuController extends Controller
                     {
                         $page = Post::find($id);
                         $menu = new Menu();
-                        $menu->name = $brand->name;
+                        $menu->name = $menu->name;
                         $menu->link = '/trang-don/'.$page->slug; 
                         $menu->parent_id = 0;
                         $menu->type = $request->type;
@@ -328,10 +329,10 @@ class MenuController extends Controller
             case "thuong-hieu":
                 for ($i = 0; $i < strlen($listid); $i++)
                 {
-                    $brand = Brand::find($listid[$i]);
+                    $menu = Menu::find($listid[$i]);
                     $menu = new Menu();
-                    $menu->name = $brand->name;
-                    $menu->link = 'thuong-hieu/'.$brand->slug; 
+                    $menu->name = $menu->name;
+                    $menu->link = 'thuong-hieu/'.$menu->slug; 
                     $menu->parent_id = 0;
                     $menu->type = $type;
                     $menu->created_at = date('Y-m-d H:i:s');
