@@ -102,8 +102,8 @@ class TopicController extends Controller
                 $query->where('db_topic.name', 'like', '%' . $key . '%');
             });
         }
-        $total = $query->count();
-        $topics = $query->paginate(8);
+        $total = Topic::where('status', '!=', 0)->count();
+        $topics = $query->paginate(5);
         $trash = Topic::where('status', '=', 0)->count();
         $publish = Topic::where('status', '=', 1)->count();
         $result = [
@@ -130,7 +130,7 @@ class TopicController extends Controller
         }
         $topicsAll = $query->get(); 
         $total = $query->count();
-        $topics = $query->paginate(8);
+        $topics = $query->paginate(5);
         $total = $topics->total();
         $trash = Topic::where('status', '=', 0)->count();
         $publish = Topic::where('status', '=', 1)->count();

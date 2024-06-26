@@ -9,4 +9,5 @@ class Image extends Model
 {
     use HasFactory;
     protected $table = 'db_pro_image';
+    public $timestamps = false;
 }

@@ -10,6 +10,7 @@ use App\Models\ProductStore;
 use App\Models\Category;
 use App\Models\OrderDetail;
 use App\Models\Post;
+use App\Models\ProductAttribute;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -551,11 +552,10 @@ class ProductController extends Controller
                     ->orWhere('db_brand.name', 'like', '%' . $key . '%');
             });
         }
-        $products = $query->orderBy('db_product.created_at', 'DESC')->paginate(8);
-        $total = $products->total();
+        $products = $query->orderBy('db_product.created_at', 'DESC')->paginate(5);
+        $total = Product::where('db_product.status', '!=', 0)->count();
         $categories = Category::where('status', '=', '1')->select('id', 'name')->get();
         $brands = Brand::where('status', '=', '1')->select('id', 'name')->get();
-        $trash = Product::where('status', '=', 0)->count();
         $publish = Product::where('status', '=', 1)->count();
         $trash = Product::where('status', '=', 0)->count();
         return response()->json(
@@ -607,7 +607,7 @@ class ProductController extends Controller
             });
         }
         $total = $query->count();
-        $products = $query->paginate(8);
+        $products = $query->paginate(5);
         $categories = Category::where('status', '=', '1')->select('id', 'name')->get();
         $brands = Brand::where('status', '=', '1')->select('id', 'name')->get();
         $publish = Product::where('status', '=', 1)->count();
@@ -699,20 +699,15 @@ class ProductController extends Controller
         $product->name = $request->name; // form
         $product->slug = Str::of($request->name)->slug('-');
         $product->price = $request->price; // form
-        
-        // Check if the 'images' key exists in the request and is an array
-        if ($request->hasFile('images') && is_array($request->images)) {
-            $files = $request->images;
-            // Handle the first image as the main product image
-            $firstFile = $files[0];
-            $firstExtension = $firstFile->getClientOriginalExtension();
-            if (in_array($firstExtension, ['jpg', 'png', 'gif', 'webp', 'jpeg'])) {
-                $firstFilename = date('YmdHis') . '.' . $firstExtension;
-                $product->image = $firstFilename;
-                $firstFile->move(public_path('images/product'), $firstFilename);
+        $files1 = $request->image;
+        if ($files1 != null) {
+            $extension = $files1->getClientOriginalExtension();
+            if (in_array($extension, ['jpg', 'png', 'gif', 'webp', 'jpeg'])) {
+                $filename = date('YmdHis') . '.' . $extension;
+                $product->image = $filename;
+                $files1->move(public_path('images/product'), $filename);
             }
         }
-    
         $product->detail = $request->detail; // form
         $product->metakey = $request->metakey; // form
         $product->metadesc = $request->metadesc; // form
@@ -722,42 +717,34 @@ class ProductController extends Controller
     
         if ($product->save()) { // Save to the database
             // Save additional images if available
-            if (isset($files) && count($files) > 1) {
-                for ($i = 1; $i < count($files); $i++) {
-                    try {
-                        $extension = $files[$i]->getClientOriginalExtension();
+            $files2 = $request->images;
+                for ($i = 0; $i < count($files2); $i++) {
+                        $extension = $files2[$i]->getClientOriginalExtension();
                         if (in_array($extension, ['jpg', 'png', 'gif', 'webp', 'jpeg'])) {
                             $filename = date('YmdHis') . '_' . $i . '.' . $extension; // Ensure unique filenames
-                            $files[$i]->move(public_path('images/pro_image'), $filename);
+                            $files2[$i]->move(public_path('images/pro_image'), $filename);
                             DB::table('db_pro_image')->insert([
                                 'image' => $filename,
                                 'product_id' => $product->id,
                             ]);
                         }
-                    } catch (\Exception $e) {
-                        // Log the exception or handle it as needed
-                        error_log('File upload error: ' . $e->getMessage());
-                    }
-                }
             }
-    
             // Process and save optionAttr
             if ($request->isVariant == 1) {
-                $optionAttrs = $request->optionAttr;
+                $optionAttrs = $request->optionAttrs;
                 if ($optionAttrs) {
                     foreach ($optionAttrs as $optionAttr) {
-                        $attribute = $optionAttr['attribute'];
-                        $values = $optionAttr['value'];
+                        $values = $optionAttr['values'];
                         // Create a ProductAttribute object
                         $proAttribute = new ProductAttribute();
                         $proAttribute->product_id = $product->id;
-                        $proAttribute->attribute_id = $attribute['id'];
-                        if ($proAttribute->save()) { // Save to the database
+                        $proAttribute->attribute_id = $optionAttr['attribute_id'];
+                        if ($proAttribute->save()) {
                             foreach ($values as $value) {
                                 DB::table('db_product_attribute_value')->insert([
                                     'product_attribute_id' => $proAttribute->id,
                                     'attribute_value_id' => $value['attribute_value_id'],
-                                    'image' => 'image'
+                                    // 'image' => $value['image'],
                                 ]);
                             }
                         }
@@ -769,7 +756,7 @@ class ProductController extends Controller
                 [
                     'status' => true,
                     'message' => 'Thành công',
-                    'product' => $product,
+                    'product' => Product::find($product->id),
                 ],
                 201
             );
@@ -784,55 +771,6 @@ class ProductController extends Controller
             );
         }
     }
-    
-    // public function store(Request $request)
-    // {
-    //     $product = new Product();
-    //     $product->category_id = $request->category_id; //form
-    //     $product->brand_id = $request->brand_id; //form
-    //     $product->name = $request->name; //form
-    //     $product->slug = Str::of($request->name)->slug('-');
-    //     $product->price = $request->price; //form
-    //     //upload image
-    //     $files = $request->image;
-    //     if ($files != null) {
-    //         $extension = $files->getClientOriginalExtension();
-    //         if (in_array($extension, ['jpg', 'png', 'gif', 'webp', 'jpeg'])) {
-    //             $filename = date('YmdHis') . '.' . $extension;
-    //             $product->image = $filename;
-    //             $files->move(public_path('images/product'), $filename);
-    //         }
-    //     }
-    //     //
-    //     $product->detail = $request->detail; //form
-    //     $product->metakey = $request->metakey; //form
-    //     $product->metadesc = $request->metadesc; //form
-    //     $product->created_at = date('Y-m-d H:i:s');
-    //     $product->created_by = 1;
-    //     $product->status = $request->status; //form
-    //     if($product->save())//Luuu vao CSDL
-    //     {
-    //         return response()->json(
-    //             [
-    //                 'status' => true, 
-    //                 'message' => 'Thành công', 
-    //                 'product' => $product
-    //             ],
-    //             201
-    //         );    
-    //     }
-    //     else
-    //     {
-    //         return response()->json(
-    //             [
-    //                 'status' => false, 
-    //                 'message' => 'Thêm không thành công', 
-    //                 'product' => null
-    //             ],
-    //             422
-    //         );
-    //     }
-    // }
     public function update(Request $request, $id)
     {
         $product = Product::find($id);

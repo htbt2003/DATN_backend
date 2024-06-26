@@ -9,4 +9,5 @@ class Review extends Model
 {
     use HasFactory;
     protected $table = 'db_review';
+    public $timestamps = false;
 }

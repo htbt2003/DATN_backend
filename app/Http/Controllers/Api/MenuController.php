@@ -152,8 +152,8 @@ class MenuController extends Controller
                 $query->where('db_menu.name', 'like', '%' . $key . '%');
             });
         }
-        $total = $query->count();
-        $menus = $query->paginate(8);
+        $total = Menu::where('status', '!=', 0)->count();
+        $menus = $query->paginate(5);
         $trash = Menu::where('status', '=', 0)->count();
         $publish = Menu::where('status', '=', 1)->count();
         $result = [
@@ -180,7 +180,7 @@ class MenuController extends Controller
         }
         $menusAll = $query->get(); 
         $total = $query->count();
-        $menus = $query->paginate(8);
+        $menus = $query->paginate(5);
         $trash = Menu::where('status', '=', 0)->count();
         $publish = Menu::where('status', '=', 1)->count();
         $result = [

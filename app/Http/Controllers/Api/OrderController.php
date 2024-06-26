@@ -139,8 +139,8 @@ class OrderController extends Controller
                 $query->where('db_order.name', 'like', '%' . $key . '%');
             });
         }
-        $total = $query->count();
-        $orders = $query->paginate(8);
+        $total = Order::where('status', '!=', 0)->count();
+        $orders = $query->paginate(5);
         $total = $orders->total();
         $trash = Order::where('status', '=', 0)->count();
         $publish = Order::where('status', '=', 1)->count();
@@ -167,7 +167,7 @@ class OrderController extends Controller
             });
         }
         $total = $query->count();
-        $orders = $query->paginate(8);
+        $orders = $query->paginate(5);
         $trash = Order::where('status', '=', 0)->count();
         $publish = Order::where('status', '=', 1)->count();
         $result = [

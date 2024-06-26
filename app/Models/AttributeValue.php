@@ -9,6 +9,6 @@ class AttributeValue extends Model
 {
     use HasFactory;
     protected $table = 'db_attribute_value';
-
+    public $timestamps = false;
 }
                      

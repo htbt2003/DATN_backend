@@ -84,8 +84,8 @@ class ContactController extends Controller
                 $query->where('db_contact.name', 'like', '%' . $key . '%');
             });
         }
-        $total = $query->count();
-        $contacts = $query->paginate(8);
+        $total = Contact::where('status', '!=', 0)->count();
+        $contacts = $query->paginate(5);
         $total = $contacts->total();
         $trash = Contact::where('status', '=', 0)->count();
         $publish = Contact::where('status', '=', 1)->count();
@@ -112,7 +112,7 @@ class ContactController extends Controller
             });
         }
         $total = $query->count();
-        $contacts = $query->paginate(8);
+        $contacts = $query->paginate(5);
         $trash = Contact::where('status', '=', 0)->count();
         $publish = Contact::where('status', '=', 1)->count();
         $result = [

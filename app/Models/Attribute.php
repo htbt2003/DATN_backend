@@ -11,7 +11,7 @@ class Attribute extends Model
     use HasFactory;
     protected $table = 'db_attributes';
     protected $with = ['values'];
-
+    public $timestamps = false;
     public function values()
     {
         return $this->hasMany(AttributeValue::class);

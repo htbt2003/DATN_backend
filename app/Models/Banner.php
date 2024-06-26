@@ -9,4 +9,5 @@ class Banner extends Model
 {
     use HasFactory;
     protected $table = 'db_banner';
+    public $timestamps = false;
 }

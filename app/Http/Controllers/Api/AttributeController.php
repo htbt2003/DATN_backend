@@ -96,7 +96,7 @@ class AttributeController extends Controller
             });
         }
         $total = $query->count();
-        $attributes = $query->paginate(8);
+        $attributes = $query->paginate(5);
         $result = [
             'status' => true, 
             'message' => 'Tải dữ liệu thành công',
@@ -118,7 +118,7 @@ class AttributeController extends Controller
         }
         $attributesAll = $query->get(); 
         $total = $query->count();
-        $attributes = $query->paginate(8);
+        $attributes = $query->paginate(5);
         $result = [
             'status' => true, 
             'message' => 'Tải dữ liệu thành công',

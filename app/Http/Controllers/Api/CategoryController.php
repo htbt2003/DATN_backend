@@ -104,8 +104,8 @@ class CategoryController extends Controller
                 $query->where('db_category.name', 'like', '%' . $key . '%');
             });
         }
-        $total = $query->count();
-        $categories = $query->paginate(8);
+        $total = Category::where('status', '!=', 0)->count();
+        $categories = $query->paginate(5);
         $trash = Category::where('status', '=', 0)->count();
         $publish = Category::where('status', '=', 1)->count();
         $result = [
@@ -132,7 +132,7 @@ class CategoryController extends Controller
         }
         $categoriesAll = $query->get(); 
         $total = $query->count();
-        $categories = $query->paginate(8);
+        $categories = $query->paginate(5);
         $trash = Category::where('status', '=', 0)->count();
         $publish = Category::where('status', '=', 1)->count();
         $result = [

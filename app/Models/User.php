@@ -12,6 +12,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 class User extends Authenticatable implements JWTSubject
 {
  	use  HasApiTokens,HasFactory, Notifiable;
+     public $timestamps = false;
  	protected $table='db_user';
     protected $fillable = [
         'name',

@@ -11,7 +11,7 @@ class ProductAttribute extends Model
     use HasFactory;
     protected $table = 'db_product_attribute';
     protected $with = ['product_attribute_values'];
-
+    public $timestamps = false;
     public function product_attribute_values()
     {
         return $this->hasMany(ProductAttributeValue::class);

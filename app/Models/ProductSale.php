@@ -14,7 +14,7 @@ class ProductSale extends Model
     use HasFactory;
     protected $table = 'db_productsale';
     protected $with = ['product', 'product.category', 'product.brand'];
-
+    public $timestamps = false;
     public function product()
     {
         return $this->belongsTo(Product::class);

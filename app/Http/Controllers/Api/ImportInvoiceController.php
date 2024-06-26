@@ -77,8 +77,8 @@ class ImportInvoiceController extends Controller
                 $query->where('db_import_invoice.note', 'like', '%' . $key . '%');
             });
         }
-        $total = $query->count();
-        $invoices = $query->paginate(8);
+        $total = ImportInvoice::where('status', '!=', 0)->count();
+        $invoices = $query->paginate(5);
         $total = $invoices->total();
         $trash = ImportInvoice::where('status', '=', 0)->count();
         $publish = ImportInvoice::where('status', '=', 1)->count();
@@ -106,7 +106,7 @@ class ImportInvoiceController extends Controller
         }
         $invoicesAll = $query->get(); 
         $total = $query->count();
-        $invoices = $query->paginate(8);
+        $invoices = $query->paginate(5);
         $total = $invoices->total();
         $trash = ImportInvoice::where('status', '=', 0)->count();
         $publish = ImportInvoice::where('status', '=', 1)->count();

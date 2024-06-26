@@ -9,4 +9,5 @@ class Brand extends Model
 {
     use HasFactory;
     protected $table='db_brand';
+    public $timestamps = false;
 }

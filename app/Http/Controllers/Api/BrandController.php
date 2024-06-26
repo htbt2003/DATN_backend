@@ -102,8 +102,8 @@ class BrandController extends Controller
                 $query->where('db_brand.name', 'like', '%' . $key . '%');
             });
         }
-        $total = $query->count();
-        $brands = $query->paginate(8);
+        $total = Brand::where('status', '!=', 0)->count();
+        $brands = $query->paginate(5);
         $trash = Brand::where('status', '=', 0)->count();
         $publish = Brand::where('status', '=', 1)->count();
         $result = [
@@ -130,7 +130,7 @@ class BrandController extends Controller
         }
         $brandsAll = $query->get(); 
         $total = $query->count();
-        $brands = $query->paginate(8);
+        $brands = $query->paginate(5);
         $trash = Brand::where('status', '=', 0)->count();
         $publish = Brand::where('status', '=', 1)->count();
         $result = [

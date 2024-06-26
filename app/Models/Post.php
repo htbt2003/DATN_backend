@@ -11,7 +11,7 @@ class Post extends Model
     use HasFactory;
     protected $table = 'db_post';
     protected $with = ['topic'];
-
+    public $timestamps = false;
     public function topic()
     {
         return $this->belongsTo(Topic::class);

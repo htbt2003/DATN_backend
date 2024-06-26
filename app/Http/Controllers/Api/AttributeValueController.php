@@ -44,8 +44,8 @@ class AttributeValueController extends Controller
                 $query->where('db_brand.name', 'like', '%' . $key . '%');
             });
         }
-        $total = $query->count();
-        $brands = $query->paginate(8);
+        $total = AttributeValue::where('status', '!=', 0)->count();
+        $brands = $query->paginate(5);
         $total = $brands->total();
         $trash = AttributeValue::where('status', '=', 0)->count();
         $publish = AttributeValue::where('status', '=', 1)->count();
@@ -73,7 +73,7 @@ class AttributeValueController extends Controller
         }
         $brandsAll = $query->get(); 
         $total = $query->count();
-        $brands = $query->paginate(8);
+        $brands = $query->paginate(5);
         $total = $brands->total();
         $trash = AttributeValue::where('status', '=', 0)->count();
         $publish = AttributeValue::where('status', '=', 1)->count();

@@ -10,11 +10,11 @@ class ProductVariantValue extends Model
 {
     use HasFactory;
     protected $table = 'db_product_variant_value';
-    protected $with = ['product_attribute_values'];
-
-    public function product_attribute_values()
+    protected $with = ['product_attribute_value'];
+    public $timestamps = false;
+    public function product_attribute_value()
     {
-        return $this->hasMany(ProductAttributeValue::class);
+        return $this->belongsTo(ProductAttributeValue::class);
     }
 }
 

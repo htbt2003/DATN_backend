@@ -15,7 +15,7 @@ class Product extends Model
     use HasFactory;
     protected $table = 'db_product';
     protected $with = ['images', 'productattributes', 'variants'];
-
+    public $timestamps = false;
     // public function category()
     // {
     //     return $this->belongsTo(Category::class);

@@ -10,11 +10,11 @@ class ProductAttributeValue extends Model
 {
     use HasFactory;
     protected $table = 'db_product_attribute_value';
-    protected $with = ['attribute_values'];
-
-    public function attribute_values()
+    protected $with = ['attribute_value'];
+    public $timestamps = false;
+    public function attribute_value()
     {
-        return $this->hasMany(AttributeValue::class);
+        return $this->belongsTo(AttributeValue::class);
     }
 }
 

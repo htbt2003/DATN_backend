@@ -64,8 +64,8 @@ class BannerController extends Controller
                 $query->where('db_banner.name', 'like', '%' . $key . '%');
             });
         }
-        $total = $query->count();
-        $banners = $query->paginate(8);
+        $total = Banner::where('status', '!=', 0)->count();
+        $banners = $query->paginate(5);
         $total = $banners->total();
         $trash = Banner::where('status', '=', 0)->count();
         $publish = Banner::where('status', '=', 1)->count();
@@ -103,7 +103,7 @@ class BannerController extends Controller
             });
         }
         $total = $query->count();
-        $banners = $query->paginate(8);
+        $banners = $query->paginate(5);
         $total = $banners->total();
         $trash = Banner::where('status', '=', 0)->count();
         $publish = Banner::where('status', '=', 1)->count();

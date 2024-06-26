@@ -146,8 +146,8 @@ class UserController extends Controller
                     ->orWhere('db_user.phone', 'like', '%' . $key . '%');
             });
         }
-        $total = $query->count();
-        $users = $query->paginate(8);
+        $total = User::where([['status', '!=', 0], ['roles', '=', 'user']])->count();
+        $users = $query->paginate(5);
         $publish = User::where([['status', '=', 1], ['roles', '=', 'user']])->count();
         $trash = User::where([['status', '=', 0], ['roles', '=', 'user']])->count();
         $result = [
@@ -176,7 +176,7 @@ class UserController extends Controller
         }
         $usersAll = $query->get(); 
         $total = $query->count();
-        $users = $query->paginate(8);
+        $users = $query->paginate(5);
         $publish = User::where([['status', '=', 1], ['roles', '=', 'user']])->count();
         $trash = User::where([['status', '=', 0], ['roles', '=', 'user']])->count();
         $result = [

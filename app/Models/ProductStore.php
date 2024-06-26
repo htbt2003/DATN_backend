@@ -13,7 +13,7 @@ class ProductStore extends Model
     use HasFactory;
     protected $table = 'db_productstore';
     protected $with = ['product', 'product.category', 'product.brand'];
-
+    public $timestamps = false;
     public function product()
     {
         return $this->belongsTo(Product::class);

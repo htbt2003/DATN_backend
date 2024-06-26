@@ -212,8 +212,8 @@ class PageController extends Controller
                     ->orWhere('db_topic.name', 'like', '%' . $key . '%');
             });
         }
-        $total = $query->count();
-        $pages = $query->paginate(8);
+        $total = Post::where([['db_post.status', '!=', 0], ['db_post.type', '=', 'page']])->count();
+        $pages = $query->paginate(5);
         $publish = Post::where([['status', '=', 1], ['type', '=', 'page']])->count();
         $trash = Post::where([['status', '=', 0], ['type', '=', 'page']])->count();
         $result = [
@@ -242,7 +242,7 @@ class PageController extends Controller
         }
         $pagesAll = $query->get(); 
         $total = $query->count();
-        $pages = $query->paginate(8);
+        $pages = $query->paginate(5);
         $publish = Post::where([['status', '=', 1], ['type', '=', 'page']])->count();
         $trash = Post::where([['status', '=', 0], ['type', '=', 'page']])->count();
         $result = [

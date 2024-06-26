@@ -9,4 +9,5 @@ class Contact extends Model
 {
     use HasFactory;
     protected $table = 'db_contact';
+    public $timestamps = false;
 }

@@ -9,4 +9,5 @@ class Topic extends Model
 {
     use HasFactory;
     protected $table = 'db_topic';
+    public $timestamps = false;
 }

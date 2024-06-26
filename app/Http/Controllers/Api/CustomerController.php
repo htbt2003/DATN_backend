@@ -73,6 +73,33 @@ class CustomerController extends Controller
             return response()->json(['message' => 'Thất bại'], 404);
         }
     }
+    public function trash(Request $condition)
+    {
+        $query = User::where([['status', '=', 0], ['roles', '=', 'customer']])
+        ->orderBy('created_at', 'DESC')
+        ->select('id', 'name', 'phone', 'email', 'image', 'status','address');
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_user.name', 'like', '%' . $key . '%');
+            });
+        }
+        $users = $query->paginate(5);
+        $total = User::where([['status', '!=', 0], ['roles', '=', 'customer']])->count();
+        $publish = User::where([['status', '=', 1], ['roles', '=', 'customer']])->count();
+        $trash = User::where([['status', '=', 0], ['roles', '=', 'customer']])->count();
+        return response()->json(
+            [
+                'status' => true, 
+                'message' => 'Tải dữ liệu thành công',
+                'users' => $users,
+                'total' => $total,
+                'publish' => $publish,
+                'trash' => $trash,
+            ],
+            200
+        );
+    }
 
     public function index(Request $condition)
     {
@@ -85,8 +112,7 @@ class CustomerController extends Controller
                 $query->where('db_user.name', 'like', '%' . $key . '%');
             });
         }
-        $total = $query->count();
-        $users = $query->paginate(8);
+        $users = $query->paginate(5);
         $total = User::where([['status', '!=', 0], ['roles', '=', 'customer']])->count();
         $publish = User::where([['status', '=', 1], ['roles', '=', 'customer']])->count();
         $trash = User::where([['status', '=', 0], ['roles', '=', 'customer']])->count();
