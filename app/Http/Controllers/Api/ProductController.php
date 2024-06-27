@@ -115,16 +115,16 @@ class ProductController extends Controller
         if (count($list_category1) > 0) {
             foreach ($list_category1 as $row1) {
                 array_push($listid, $row1->id);
-                $args_cat2 = [
-                    ['parent_id', '=', $row1->id],
-                    ['status', '=', 1]
-                ];
-                $list_category2 = Category::where($args_cat2)->get();
-                if (count($list_category2) > 0) {
-                    foreach ($list_category2 as $row2) {
-                        array_push($listid, $row2->id);
-                    }
-                }
+                // $args_cat2 = [
+                //     ['parent_id', '=', $row1->id],
+                //     ['status', '=', 1]
+                // ];
+                // $list_category2 = Category::where($args_cat2)->get();
+                // if (count($list_category2) > 0) {
+                //     foreach ($list_category2 as $row2) {
+                //         array_push($listid, $row2->id);
+                //     }
+                // }
             }
         }
         $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty'))
@@ -258,16 +258,16 @@ class ProductController extends Controller
         if (count($list_category1) > 0) {
             foreach ($list_category1 as $row1) {
                 array_push($listid, $row1->id);
-                $args_cat2 = [
-                    ['parent_id', '=', $row1->id],
-                    ['status', '=', 1]
-                ];
-                $list_category2 = Category::where($args_cat2)->get();
-                if (count($list_category2) > 0) {
-                    foreach ($list_category2 as $row2) {
-                        array_push($listid, $row2->id);
-                    }
-                }
+                // $args_cat2 = [
+                //     ['parent_id', '=', $row1->id],
+                //     ['status', '=', 1]
+                // ];
+                // $list_category2 = Category::where($args_cat2)->get();
+                // if (count($list_category2) > 0) {
+                //     foreach ($list_category2 as $row2) {
+                //         array_push($listid, $row2->id);
+                //     }
+                // }
             }
         }
         $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty'))
@@ -380,7 +380,7 @@ class ProductController extends Controller
                     ->where('db_productsale.date_begin', '<=', Carbon::now())
                     ->where('db_productsale.date_end', '>=', Carbon::now());
             })
-            ->select('db_product.id','db_product.name', 'db_product.image', 'db_product.price','db_product.slug', 'db_productsale.price_sale')
+            ->select('db_product.id','db_product.name', 'db_product.image', 'db_product.price','db_product.slug', 'db_productsale.price_sale',  'db_product.detail')
             ->first();
         if($product == null){
             return response()->json(
@@ -441,23 +441,18 @@ class ProductController extends Controller
     }
     public function search(Request $request)
     {
-        
             $search = $request->input('key');
-            $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty'))
-            ->groupBy('product_id');
-            $products = Product::where('status', '=', 1)
-                ->where(function ($query) use ($search) {
-                    $query->where('name', 'LIKE', "%$search%")
-                        ->orWhere('metadesc', 'LIKE', "%$search%");
-                })
-                ->orWhereHas('category', function ($query) use ($search) {
-                    $query->where('name', 'LIKE', "%$search%");
-                })
-                ->orWhereHas('brand', function ($query) use ($search) {
-                    $query->where('name', 'LIKE', "%$search%");
-                })
+            $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty'))->groupBy('product_id');
+            $products = Product::where('db_product.status', '=', 1)
                 ->joinSub($productstore, 'productstore', function ($join) {
                     $join->on('db_product.id', '=', 'productstore.product_id');
+                })
+                ->leftJoin('db_category', 'db_product.category_id', '=', 'db_category.id')
+                ->leftJoin('db_brand', 'db_product.brand_id', '=', 'db_brand.id')
+                ->where(function ($query) use ($search) {
+                    $query->where('db_product.name', 'LIKE', "%$search%")
+                        ->orWhere('db_category.name', 'like', '%' . $search . '%')
+                        ->orWhere('db_brand.name', 'like', '%' . $search . '%');
                 })
                 ->leftJoin('db_productsale', function ($join) {
                     $join->on('db_product.id', '=', 'db_productsale.product_id')
@@ -478,16 +473,12 @@ class ProductController extends Controller
                 })
                 ->orderBy('created_at', "DESC")
                 ->get();
-            // $protoltal = $products->total(); 
-            // $posttoltal = $posts->total(); 
             return response()->json(
                 [
                     'status' => true,
                     'message' => 'Tải dữ liệu thành công',
                     'products' => $products,
                     'posts' => $posts,
-                    // 'protoltal' => $protoltal,
-                    // 'posttoltal' => $posttoltal,
                     'search' => $search,
 
                 ],
@@ -751,7 +742,6 @@ class ProductController extends Controller
                     }
                 }
             }
-    
             return response()->json(
                 [
                     'status' => true,
@@ -770,6 +760,21 @@ class ProductController extends Controller
                 422
             );
         }
+    }
+    function generateCombinations($arrays) {
+        $result = [[]]; // Khởi tạo với một mảng rỗng
+    
+        foreach ($arrays as $property_values) {
+            $temp = [];    
+            foreach ($result as $result_item) {
+                foreach ($property_values as $property_value) {
+                    $temp[] = array_merge($result_item, [$property_value]);
+                }
+            }
+    
+            $result = $temp; // Cập nhật lại kết quả
+        }
+        return $result;
     }
     public function update(Request $request, $id)
     {

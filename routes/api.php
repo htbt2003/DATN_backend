@@ -22,7 +22,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\AttributeController;
 use App\Http\Controllers\Api\AttributeValueController;
-use App\Http\Controllers\Api\VariantController;
+use App\Http\Controllers\Api\ProductVariantController;
 
 //address
 Route::get('address_userId/{id?}', [AddressController::class, 'address_userId']);
@@ -88,6 +88,17 @@ Route::delete('review/destroy/{id}', [ReviewController::class, 'destroy']);
 
 
 
+Route::prefix('variant')->group(function () {
+    // Route::get('index', [ProductVariantController::class, 'index']);
+    // Route::get('show/{id}', [ProductVariantController::class, 'show']);
+    Route::post('store', [ProductVariantController::class, 'store']);
+    // Route::post('update/{id}', [ProductVariantController::class, 'update']);
+    // Route::delete('destroy/{id}', [ProductVariantController::class, 'destroy']);
+    // Route::get('change_status/{key}', [ProductVariantController::class, 'changeStatus']);
+    // Route::get('delete/{key}', [ProductVariantController::class, 'delete']);
+    // Route::get('restore/{key}', [ProductVariantController::class, 'restore']);
+    // Route::get('trash', [ProductVariantController::class, 'trash']);
+});
 
 
 Route::prefix('brand')->group(function () {
@@ -314,19 +325,6 @@ Route::prefix('attributeValue')->group(function () {
     Route::post('action_destroy', [AttributeValueController::class, 'action_destroy']);
 });
 
-Route::prefix('variant')->group(function () {
-    Route::get('index', [VariantController::class, 'index']);
-    Route::get('show/{id}', [VariantController::class, 'show']);
-    Route::post('store', [VariantController::class, 'store']);
-    Route::post('update/{id}', [VariantController::class, 'update']);
-    Route::delete('destroy/{id}', [VariantController::class, 'destroy']);
-    Route::get('change_status/{key}', [VariantController::class, 'changeStatus']);
-    Route::get('delete/{key}', [VariantController::class, 'delete']);
-    Route::get('restore/{key}', [VariantController::class, 'restore']);
-    Route::get('trash', [VariantController::class, 'trash']);
-    Route::post('action_trash', [VariantController::class, 'action_trash']);
-    Route::post('action_destroy', [VariantController::class, 'action_destroy']);
-});
 
 Route::post('login', [AuthController::class,'login']);
 Route::post('register', [AuthController::class,'register']);

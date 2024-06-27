@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Menu;
-use App\Models\menu;
+use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\Topic;
