@@ -40,6 +40,9 @@ Route::prefix('address')->group(function () {
     Route::get('trash?page={page}', [AddressController::class, 'trash']);
 });
 
+Route::post('login', [AuthController::class,'login']);
+Route::post('register', [AuthController::class,'register']);
+
 
 Route::get('brand_home/{limit}', [BrandController::class, 'brand_home']);
 
@@ -49,9 +52,6 @@ Route::get('category_list/{parent_id?}', [CategoryController::class, 'category_l
 Route::get('topic_list/{parent_id?}', [TopicController::class, 'topic_list']);
 
 Route::post('updateAccount/{id}', [UserController::class, 'update_account']);
-Route::post('register', [UserController::class, 'register']);
-Route::post('login', [AuthController::class, 'login']);
-Route::post('logout', [UserController::class, 'logout']);
 
 Route::get('product_new/{limit}', [ProductController::class, 'product_new']);
 Route::get('product_sale/{limit}', [ProductController::class, 'product_sale']);
@@ -326,10 +326,8 @@ Route::prefix('attributeValue')->group(function () {
 });
 
 
-Route::post('login', [AuthController::class,'login']);
-Route::post('register', [AuthController::class,'register']);
 
-Route::group(['middleware'=>'api'],function(){
+Route::group(['middleware'=>'api', 'prefix' => 'auth'],function(){
     Route::post('logout', [AuthController::class,'logout']);
     Route::post('refresh', [AuthController::class,'refresh']);
     Route::post('me', [AuthController::class,'me']);

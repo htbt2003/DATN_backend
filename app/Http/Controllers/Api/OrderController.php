@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderDetail;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\MyEmail;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -33,12 +34,11 @@ class OrderController extends Controller
                 'variant_id' => $item['variant_id'],
                 'price' => $item['price'],
                 'qty' => $item['quantity'],
-                'cost' => $item['cost'],
+                'price_root' => $item['cost'],
                 'created_at' => now(),
             ]);
         }
-    
-        Mail::to($orderData[$order->email])->send(new MyEmail($order));
+        Mail::to($order->email)->send(new MyEmail($order));
     
         return response()->json([
             'status' => true,

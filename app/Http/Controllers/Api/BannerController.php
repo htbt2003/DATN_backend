@@ -66,7 +66,6 @@ class BannerController extends Controller
         }
         $total = Banner::where('status', '!=', 0)->count();
         $banners = $query->paginate(5);
-        $total = $banners->total();
         $trash = Banner::where('status', '=', 0)->count();
         $publish = Banner::where('status', '=', 1)->count();
         return response()->json(

@@ -75,9 +75,10 @@ class ContactController extends Controller
 
     public function trash(Request $condition)
     {
-        $query = Contact::where('status', '=', 0)
+        $query = Contact::where('db_contact.status', '=', 0)
+            ->leftJoin('db_user', 'db_contact.user_id', '=', 'db_user.id')
             ->orderBy('created_at', 'DESC')
-            ->select('id', 'name', 'phone', 'email', 'title', 'status');
+            ->select('db_contact.id', 'db_contact.name', 'db_contact.phone', 'db_contact.email', 'db_contact.title', 'db_contact.status', 'db_user.image as image');
         if ($condition->input('keySearch') != null ) {
             $key = $condition->input('keySearch');
             $query->where(function ($query) use ($key) {
@@ -102,15 +103,10 @@ class ContactController extends Controller
 
     public function index(Request $condition)
     {
-        $query = Contact::where('status', '!=', 0)
-        ->orderBy('created_at', 'DESC')
-        ->select('id', 'name', 'phone', 'email', 'title', 'status');
-        if ($condition->input('keySearch') != null ) {
-            $key = $condition->input('keySearch');
-            $query->where(function ($query) use ($key) {
-                $query->where('db_contact.name', 'like', '%' . $key . '%');
-            });
-        }
+        $query = Contact::where('db_contact.status', '!=', 0)
+        ->leftJoin('db_user', 'db_contact.user_id', '=', 'db_user.id')
+        ->orderBy('db_contact.created_at', 'DESC')
+        ->select('db_contact.id', 'db_contact.name', 'db_contact.phone', 'db_contact.email', 'db_contact.title','db_contact.content', 'db_contact.status', 'db_user.image as image');
         $total = $query->count();
         $contacts = $query->paginate(5);
         $trash = Contact::where('status', '=', 0)->count();

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -51,7 +52,15 @@ class AuthController extends Controller
         $user->password = Hash::make($request->password); //form
         $user->address = $request->address; //form
         $user->roles = $request->roles; //form
-        $user->image = $request->image; 
+        $files1 = $request->image;
+        if ($files1 != null) {
+            $extension = $files1->getClientOriginalExtension();
+            if (in_array($extension, ['jpg', 'png', 'gif', 'webp', 'jpeg'])) {
+                $filename = date('YmdHis') . '.' . $extension;
+                $user->image = $filename;
+                $files1->move(public_path('images/user'), $filename);
+            }
+        }
         $user->created_at = date('Y-m-d H:i:s');
         $user->created_by = 1;
         $user->status = $request->status; //form
