@@ -12,14 +12,9 @@ class AuthController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login', 'register', 'doCheckout']]);
+        $this->middleware('auth:api', ['except' => ['login', 'register', 'loginGoogle', 'loginFacebook']]);
     }
 
-    /**
-     * Get a JWT via given credentials.
-     
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function login()
     {
         $credentials = request(['email', 'password']);
@@ -30,6 +25,62 @@ class AuthController extends Controller
 
         return $this->respondWithToken($token);
     }
+    public function loginFacebook(Request $request)
+    {
+        $user = User::where('facebook_id', $request->input('id'))->first();
+    
+        // If user not found, find by email
+        if (!$user) {
+            $user = User::where('email', $request->input('email'))->first();
+    
+            if ($user) {
+                $user->facebook_id = $request->input('id');
+                $user->save();
+            } else {
+                // If user not found by email, create a new user
+                $user = User::create([
+                    'name' => $request->input('name'),
+                    'email' => $request->input('email'),
+                    'facebook_id' => $request->input('id'),
+                    'image' => $request->input('picture.data.url'),
+                    // Add other necessary fields
+                ]);
+            }
+        }
+    
+        // Generate JWT token
+        $token = auth()->login($user);
+    
+        return $this->respondWithToken($token);
+    }
+    public function loginGoogle(Request $request)
+    {
+        $user = User::where('google_sub', $request->input('sub'))->first();
+    
+        // If user not found, find by email
+        if (!$user) {
+            $user = User::where('email', $request->input('email'))->first();    
+            if ($user) {
+                $user->google_sub = $request->input('sub');
+                $user->save();
+            } else {
+                // If user not found by email, create a new user
+                $user = User::create([
+                    'name' => $request->input('name'),
+                    'email' => $request->input('email'),
+                    'google_sub' => $request->input('sub'),
+                    'image' => $request->input('picture'),
+                    // Add other necessary fields
+                ]);
+            }
+        }
+    
+        // Generate JWT token
+        $token = auth()->login($user);
+    
+        return $this->respondWithToken($token);
+    }
+
     public function register(Request $request)
     {
         // $request->validate([
@@ -43,6 +94,16 @@ class AuthController extends Controller
         //     'email' => $request->input('email'),
         //     'password' => Hash::make($request->input('password')),
         // ]);
+        $user = User::where('email', $request->email)->first();
+        if($user){
+            return response()->json(
+                [
+                    'status' => false,
+                    'message' => 'Email đã tồn tại',
+                    'user' => $user
+                ]
+            );    
+        }
         $user = new User();
         $user->name = $request->name; //form
         $user->gender = $request->gender; //form
@@ -75,21 +136,11 @@ class AuthController extends Controller
             201
         );    
     }
-    /**
-     * Get the authenticated User.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function me()
     {
         return response()->json(auth()->user());
     }
 
-    /**
-     * Log the user out (Invalidate the token).
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function logout()
     {
         auth()->logout();
@@ -97,23 +148,11 @@ class AuthController extends Controller
         return response()->json(['message' => 'Successfully logged out']);
     }
 
-    /**
-     * Refresh a token.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function refresh()
     {
         return $this->respondWithToken(auth()->refresh());
     }
 
-    /**
-     * Get the token array structure.
-     *
-     * @param  string $token
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     protected function respondWithToken($token)
     {
         return response()->json([

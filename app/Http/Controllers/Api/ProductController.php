@@ -568,7 +568,9 @@ class ProductController extends Controller
         $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
             ->groupBy('product_id');
         $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
-        ->groupBy('product_id');
+                ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+                ->whereNotIn('db_order.status', [0, 5])
+                ->groupBy('product_id'); 
         $query = Product::where('db_product.status','!=', 0)
             ->leftJoinSub($productstore, 'productstore', function($join){
                 $join->on('db_product.id', '=', 'productstore.product_id');

@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\AttributeController;
 use App\Http\Controllers\Api\AttributeValueController;
 use App\Http\Controllers\Api\ProductVariantController;
+use App\Http\Controllers\Api\CartController;
 
 //address
 Route::get('address_userId/{id?}', [AddressController::class, 'address_userId']);
@@ -41,6 +42,8 @@ Route::prefix('address')->group(function () {
 });
 
 Route::post('login', [AuthController::class,'login']);
+Route::post('loginFacebook', [AuthController::class,'loginFacebook']);
+Route::post('loginGoogle', [AuthController::class,'loginGoogle']);
 Route::post('register', [AuthController::class,'register']);
 
 
@@ -77,6 +80,7 @@ Route::get('page_detail/{slug}', [PageController::class, 'page_detail']);
 Route::get('order/index', [OrderController::class, 'index']);
 Route::get('order/{id}', [OrderController::class, 'order_userId']);
 Route::post('doCheckout', [OrderController::class, 'doCheckout']);
+Route::get('getUSDRate', [OrderController::class, 'getUSDRate']);
 
 
 
@@ -86,18 +90,22 @@ Route::post('review/store', [ReviewController::class, 'store']);
 Route::delete('review/destroy/{id}', [ReviewController::class, 'destroy']);
 
 
+Route::prefix('cart')->group(function () {
+    Route::get('list/{deviceId}', [CartController::class, 'list']);
+    Route::post('add', [CartController::class, 'add']);
+    Route::post('update_qty/{id}/{qty}', [CartController::class, 'update_qty']);
+    Route::post('selected/{id}', [CartController::class, 'selected']);
+    Route::get('list_selected/{deviceId}', [CartController::class, 'list_selected']);
+    Route::get('increase/{id}', [CartController::class, 'increase']);
+    Route::get('decrease/{id}', [CartController::class, 'decrease']);
+    Route::delete('delete/{id}', [CartController::class, 'delete']);
+});
+
+
 
 
 Route::prefix('variant')->group(function () {
-    // Route::get('index', [ProductVariantController::class, 'index']);
-    // Route::get('show/{id}', [ProductVariantController::class, 'show']);
     Route::post('store', [ProductVariantController::class, 'store']);
-    // Route::post('update/{id}', [ProductVariantController::class, 'update']);
-    // Route::delete('destroy/{id}', [ProductVariantController::class, 'destroy']);
-    // Route::get('change_status/{key}', [ProductVariantController::class, 'changeStatus']);
-    // Route::get('delete/{key}', [ProductVariantController::class, 'delete']);
-    // Route::get('restore/{key}', [ProductVariantController::class, 'restore']);
-    // Route::get('trash', [ProductVariantController::class, 'trash']);
 });
 
 

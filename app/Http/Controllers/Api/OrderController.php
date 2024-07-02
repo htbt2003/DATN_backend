@@ -9,13 +9,36 @@ use App\Models\OrderDetail;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\MyEmail;
 use Illuminate\Support\Facades\DB;
+use GuzzleHttp\Client;
+use App\Models\CartItem;
 
 class OrderController extends Controller
 {
+    public function getUSDRate()
+    {
+        $client = new Client();
+        try {
+            $response = $client->get('https://v6.exchangerate-api.com/v6/55281f5fd4dfce1a24054035/latest/USD');
+
+            $rates = json_decode($response->getBody(), true);
+
+            if (isset($rates['conversion_rates']['USD']) && isset($rates['conversion_rates']['VND'])) {
+                $usdToVnd = $rates['conversion_rates']['VND'];
+                $vndToUsd = 1 / $usdToVnd;
+                return response()->json(['vnd_to_usd' => $vndToUsd, 'usd_to_vnd' => $usdToVnd]);
+            }
+
+            return response()->json(['error' => 'Unable to fetch exchange rates'], 500);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
     public function doCheckout(Request $request)
     {  
         $orderData = $request->order;
-        
+        $ListCart = $request->ListCart;
+
         $order = new Order();
         $order->user_id = $orderData['user_id']; 
         $order->name = $orderData['name']; 
@@ -27,7 +50,7 @@ class OrderController extends Controller
         $order->created_by = $orderData['user_id'];
         $order->save();
     
-        foreach ($request->ListCart as $item) {
+        foreach ($ListCart as $item) {
             DB::table('db_orderdetail')->insert([
                 'order_id' => $order->id,
                 'product_id' => $item['product_id'],
@@ -37,7 +60,9 @@ class OrderController extends Controller
                 'price_root' => $item['cost'],
                 'created_at' => now(),
             ]);
+            CartItem::where('id', '=', $item['id'])->delete();
         }
+        
         Mail::to($order->email)->send(new MyEmail($order));
     
         return response()->json([
@@ -46,7 +71,26 @@ class OrderController extends Controller
             'order' => $order,
         ], 200);
     }
-    
+    // public function getUSDRate()
+    // {
+    //     $client = new Client();
+    //     $response = $client->get('https://v6.exchangerate-api.com/v6/55281f5fd4dfce1a24054035/latest/USD', [
+    //         'query' => [
+    //             'app_id' => '55281f5fd4dfce1a24054035',
+    //             'symbols' => 'USD,VND'
+    //         ]
+    //     ]);
+
+    //     $rates = json_decode($response->getBody(), true);
+
+    //     if (isset($rates['rates']['USD']) && isset($rates['rates']['VND'])) {
+    //         $usdToVnd = $rates['rates']['VND'];
+    //         $vndToUsd = 1 / $usdToVnd;
+    //         return response()->json(['vnd_to_usd' => $vndToUsd, 'usd_to_vnd' => $usdToVnd]);
+    //     }
+
+    //     return response()->json(['error' => 'Unable to fetch exchange rates'], 500);
+    // }
     public function order_userId($user_id)
     {
         $args = [
