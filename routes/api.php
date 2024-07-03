@@ -77,8 +77,7 @@ Route::get('post_new', [PostController::class, 'post_new']);
 
 Route::get('page_detail/{slug}', [PageController::class, 'page_detail']);
 
-Route::get('order/index', [OrderController::class, 'index']);
-Route::get('order/{id}', [OrderController::class, 'order_userId']);
+Route::get('order_userId/{id}', [OrderController::class, 'order_userId']);
 Route::post('doCheckout', [OrderController::class, 'doCheckout']);
 Route::get('getUSDRate', [OrderController::class, 'getUSDRate']);
 
@@ -88,6 +87,21 @@ Route::get('reviewProduct/{product_id}', [ReviewController::class, 'review_produ
 Route::get('reviewProductUser/{product_id}/{user_id}', [ReviewController::class, 'review_product_user']);
 Route::post('review/store', [ReviewController::class, 'store']);
 Route::delete('review/destroy/{id}', [ReviewController::class, 'destroy']);
+
+Route::prefix('order')->group(function () {
+    Route::get('index', [OrderController::class, 'index']);
+    Route::get('show/{id}', [OrderController::class, 'show']);
+    Route::post('store', [OrderController::class, 'store']);
+    Route::post('update/{id}', [OrderController::class, 'update']);
+    Route::delete('destroy/{id}', [OrderController::class, 'destroy']);
+    Route::get('change_status/{key}', [OrderController::class, 'changeStatus']);
+    Route::get('delete/{key}', [OrderController::class, 'delete']);
+    Route::get('restore/{key}', [OrderController::class, 'restore']);
+    Route::get('trash', [OrderController::class, 'trash']);
+    Route::post('action_trash', [OrderController::class, 'action_trash']);
+    Route::post('action_destroy', [OrderController::class, 'action_destroy']);
+
+});
 
 
 Route::prefix('cart')->group(function () {
@@ -165,20 +179,6 @@ Route::prefix('menu')->group(function () {
     Route::get('trash', [MenuController::class, 'trash']);
     Route::post('action_trash', [MenuController::class, 'action_trash']);
     Route::post('action_destroy', [MenuController::class, 'action_destroy']);
-
-});
-Route::prefix('order')->group(function () {
-    Route::get('index', [OrderController::class, 'index']);
-    Route::get('show/{id}', [OrderController::class, 'show']);
-    Route::post('store', [OrderController::class, 'store']);
-    Route::post('update/{id}', [OrderController::class, 'update']);
-    Route::delete('destroy/{id}', [OrderController::class, 'destroy']);
-    Route::get('change_status/{key}', [OrderController::class, 'changeStatus']);
-    Route::get('delete/{key}', [OrderController::class, 'delete']);
-    Route::get('restore/{key}', [OrderController::class, 'restore']);
-    Route::get('trash', [OrderController::class, 'trash']);
-    Route::post('action_trash', [OrderController::class, 'action_trash']);
-    Route::post('action_destroy', [OrderController::class, 'action_destroy']);
 
 });
 Route::prefix('post')->group(function () {

@@ -145,7 +145,7 @@ class MenuController extends Controller
     {
         $query = Menu::where('status', '=', 0)
             ->orderBy('created_at', 'DESC')
-            >select('id', 'name', 'link', 'position', 'status' );
+            ->select('id', 'name', 'link', 'position', 'status' );
         if ($condition->input('keySearch') != null ) {
             $key = $condition->input('keySearch');
             $query->where(function ($query) use ($key) {
@@ -171,7 +171,7 @@ class MenuController extends Controller
     {
         $query = Menu::where('status', '!=', 0)
         ->orderBy('created_at', 'DESC')
-        >select('id', 'name', 'link', 'position', 'status' );
+        ->select('id', 'name', 'link', 'position', 'status' );
         if ($condition->input('keySearch') != null ) {
             $key = $condition->input('keySearch');
             $query->where(function ($query) use ($key) {

@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Brand;
+use App\Models\Review;
 use App\Models\ProductStore;
+use App\Models\ProductSale;
 use App\Models\Category;
 use App\Models\OrderDetail;
 use App\Models\Post;
@@ -19,21 +21,50 @@ class ProductController extends Controller
 {
     function product_new($limit)
     {
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty'))
-        ->groupBy('product_id');
+        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+            ->groupBy('product_id');
+
+        $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
+            ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+            ->whereNotIn('db_order.status', [0, 5, 6])
+            ->groupBy('product_id');
+
+        $productsale = ProductSale::select('product_id', DB::raw('MIN(price_sale) as price_sale'))
+            ->where('date_begin', '<=', Carbon::now())
+            ->where('date_end', '>=', Carbon::now())
+            ->groupBy('product_id');
+
+        $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
+            ->groupBy('product_id'); 
+
         $products = Product::where('status', '=', 1)
-            ->joinSub($productstore, 'productstore', function($join){
+            ->joinSub($productstore, 'productstore', function ($join) {
                 $join->on('db_product.id', '=', 'productstore.product_id');
             })
-            ->leftJoin('db_productsale', function ($join) {
-                $join->on('db_product.id', '=', 'db_productsale.product_id')
-                    ->where('db_productsale.date_begin', '<=', Carbon::now())
-                    ->where('db_productsale.date_end', '>=', Carbon::now());
+            ->leftJoinSub($productsale, 'productsale', function ($join) {
+                $join->on('db_product.id', '=', 'productsale.product_id');
             })
+            ->leftJoinSub($orderdetail, 'orderdetail', function ($join) {
+                $join->on('db_product.id', '=', 'orderdetail.product_id');
+            })
+            ->leftJoinSub($review, 'review', function($join){
+                $join->on('db_product.id', '=', 'review.product_id');
+            }) 
             ->orderBy('db_product.created_at', 'DESC')
-            ->select('db_product.id','db_product.name', 'db_product.image', 'db_product.price', 'db_product.slug', 'db_productsale.price_sale')
-            -> limit($limit)
+            ->select(
+                'db_product.id',
+                'db_product.name',
+                'db_product.image',
+                'db_product.price',
+                'db_product.slug',
+                'productsale.price_sale',
+                'productstore.sum_qty_store',
+                'orderdetail.sum_qty_selled',
+                'review.avg_rating',
+            )
+            ->limit($limit)
             ->get();
+
         return response()->json(
             [
                 'status' => true,
@@ -42,22 +73,52 @@ class ProductController extends Controller
             ],
             200
         );
-    }
+    }   
     function product_sale($limit)
     {
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty'))
-        ->groupBy('product_id');
+        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+            ->groupBy('product_id');
+
+        $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
+            ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+            ->whereNotIn('db_order.status', [0, 5, 6])
+            ->groupBy('product_id'); 
+
+        $productsale = ProductSale::select('product_id', DB::raw('MIN(price_sale) as price_sale'))
+            ->where('date_begin', '<=', Carbon::now())
+            ->where('date_end', '>=', Carbon::now())
+            ->groupBy('product_id');
+
+        $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
+            ->groupBy('product_id'); 
+
         $products = Product::where([
                 ['db_product.status', '=', 1],
-                ['db_productsale.date_begin', '<=', Carbon::now()],
-                ['db_productsale.date_end', '>=', Carbon::now()]
             ])
             ->joinSub($productstore, 'productstore', function($join){
                 $join->on('db_product.id', '=', 'productstore.product_id');
             })
-            ->join('db_productsale', 'db_product.id', '=', 'db_productsale.product_id')
+            ->joinSub($productsale, 'productsale', function ($join) {
+                $join->on('db_product.id', '=', 'productsale.product_id');
+            })
+            ->leftJoinSub($orderdetail, 'orderdetail', function($join){
+                $join->on('db_product.id', '=', 'orderdetail.product_id');
+            })
+            ->leftJoinSub($review, 'review', function($join){
+                $join->on('db_product.id', '=', 'review.product_id');
+            }) 
             ->orderBy('db_product.created_at', 'DESC')
-            ->select('db_product.id','db_product.name', 'db_product.image', 'db_product.price', 'db_product.slug', 'db_productsale.price_sale', 'db_productsale.date_begin', 'db_productsale.date_end')
+            ->select(
+                    'db_product.id',
+                    'db_product.name',
+                    'db_product.image',
+                    'db_product.price',
+                    'db_product.slug',
+                    'productsale.price_sale',
+                    'productstore.sum_qty_store',
+                    'orderdetail.sum_qty_selled',
+                    'review.avg_rating',
+                    )
             -> limit($limit)
             ->get();
         return response()->json(
@@ -71,10 +132,17 @@ class ProductController extends Controller
     }
     function product_bestSeller($limit)
     {
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty'))
+        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
             ->groupBy('product_id');
-        $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty'))
+
+        $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
+            ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+            ->whereNotIn('db_order.status', [0, 5, 6])
             ->groupBy('product_id');
+
+        $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
+            ->groupBy('product_id'); 
+
         $products = Product::where([
                 ['db_product.status', '=', 1],
             ])
@@ -89,9 +157,23 @@ class ProductController extends Controller
                     ->where('db_productsale.date_begin', '<=', Carbon::now())
                     ->where('db_productsale.date_end', '>=', Carbon::now());
             })
-            ->orderBy('orderdetail.sum_qty', 'DESC')
-            ->select('db_product.id','db_product.name', 'db_product.image', 'db_product.price','db_product.slug', 'db_productsale.price_sale')
-            -> limit($limit)
+            ->leftJoinSub($review, 'review', function($join){
+                $join->on('db_product.id', '=', 'review.product_id');
+            }) 
+            ->orderBy('orderdetail.sum_qty_selled', 'DESC')
+            ->select(
+                'db_product.id',
+                'db_product.name',
+                'db_product.image',
+                'db_product.price',
+                'db_product.slug',
+                DB::raw('MIN(db_productsale.price_sale) as price_sale'),
+                'productstore.sum_qty_store as sum_qty_store',
+                'orderdetail.sum_qty_selled as sum_qty_selled',
+                'review.avg_rating',
+            )            
+            ->groupBy('db_product.id')
+            ->limit($limit)
             ->get();
         return response()->json(
             [
@@ -127,8 +209,17 @@ class ProductController extends Controller
                 // }
             }
         }
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty'))
+        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
         ->groupBy('product_id');
+
+        $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
+                ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+                ->whereNotIn('db_order.status', [0, 5, 6])
+                ->groupBy('product_id'); 
+
+        $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
+                ->groupBy('product_id'); 
+    
         $products = Product::where('db_product.status', '=', 1)
             ->joinSub($productstore, 'productstore', function($join){
                 $join->on('db_product.id', '=', 'productstore.product_id');
@@ -139,9 +230,26 @@ class ProductController extends Controller
                     ->where('db_productsale.date_begin', '<=', Carbon::now())
                     ->where('db_productsale.date_end', '>=', Carbon::now());
             })
+            ->leftJoinSub($orderdetail, 'orderdetail', function($join){
+                $join->on('db_product.id', '=', 'orderdetail.product_id');
+            })
+            ->leftJoinSub($review, 'review', function($join){
+                $join->on('db_product.id', '=', 'review.product_id');
+            }) 
             ->orderBy('db_product.created_at', 'DESC')
-            ->select('db_product.id','db_product.name', 'db_product.image', 'db_product.price','db_product.slug', 'db_productsale.price_sale')
-            -> limit($limit)
+            ->select(
+                'db_product.id',
+                'db_product.name',
+                'db_product.image',
+                'db_product.price',
+                'db_product.slug',
+                DB::raw('MIN(db_productsale.price_sale) as price_sale'),
+                'productstore.sum_qty_store',
+                'orderdetail.sum_qty_selled',
+                'review.avg_rating',
+            )
+            ->groupBy('db_product.id')
+            ->limit($limit)
             ->get();
         if(count($products)>0){
             return response()->json(
@@ -191,8 +299,17 @@ class ProductController extends Controller
     }
     public function product_allAction(Request $condition)
     {
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty'))
+        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
             ->groupBy('product_id');
+
+        $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
+                ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+                ->whereNotIn('db_order.status', [0, 5, 6])
+                ->groupBy('product_id'); 
+
+        $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
+                ->groupBy('product_id'); 
+    
         $query = Product::where('db_product.status','=', 1)
             ->joinSub($productstore, 'productstore', function($join){
                 $join->on('db_product.id', '=', 'productstore.product_id');
@@ -202,7 +319,25 @@ class ProductController extends Controller
                     ->where('db_productsale.date_begin', '<=', Carbon::now())
                     ->where('db_productsale.date_end', '>=', Carbon::now());
             })
-            ->select('db_product.id','db_product.name', 'db_product.image', 'db_product.price','db_product.slug', 'db_product.created_at', 'db_productsale.price_sale');
+            ->leftJoinSub($orderdetail, 'orderdetail', function($join){
+                $join->on('db_product.id', '=', 'orderdetail.product_id');
+            })
+            ->leftJoinSub($review, 'review', function($join){
+                $join->on('db_product.id', '=', 'review.product_id');
+            }) 
+            ->select(
+                    'db_product.id',
+                    'db_product.name',
+                    'db_product.image',
+                    'db_product.price',
+                    'db_product.slug',
+                    'db_product.created_at',
+                    DB::raw('MIN(db_productsale.price_sale) as price_sale'),
+                    'productstore.sum_qty_store',
+                    'orderdetail.sum_qty_selled',
+                    'review.avg_rating',
+                )            
+            ->groupBy('db_product.id');
 
         if ($condition->input('brands') != null) {
             $query->whereIn('brand_id', $condition->input('brands'));
@@ -223,7 +358,7 @@ class ProductController extends Controller
             $query->orderBy('price', $condition->input('sort'));
         }
         else{
-            $query->orderBy('created_at', 'DESC');
+            $query->orderBy('db_product.created_at', 'DESC');
         }
         $total = $query->count();
         $products = $query->paginate(8);
@@ -270,8 +405,17 @@ class ProductController extends Controller
                 // }
             }
         }
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty'))
-        ->groupBy('product_id');
+        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+            ->groupBy('product_id');
+
+        $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
+            ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+            ->whereNotIn('db_order.status', [0, 5, 6])
+            ->groupBy('product_id'); 
+
+        $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
+            ->groupBy('product_id'); 
+
         $query = Product::where('status','=', 1)
             ->joinSub($productstore, 'productstore', function($join){
                 $join->on('db_product.id', '=', 'productstore.product_id');
@@ -282,7 +426,25 @@ class ProductController extends Controller
                     ->where('db_productsale.date_begin', '<=', Carbon::now())
                     ->where('db_productsale.date_end', '>=', Carbon::now());
             })
-            ->select('db_product.id','db_product.name', 'db_product.image', 'db_product.price','db_product.slug', 'db_product.created_at', 'db_product.created_at', 'db_productsale.price_sale');
+            ->leftJoinSub($orderdetail, 'orderdetail', function($join){
+                $join->on('db_product.id', '=', 'orderdetail.product_id');
+            })
+            ->leftJoinSub($review, 'review', function($join){
+                $join->on('db_product.id', '=', 'review.product_id');
+            }) 
+            ->select(
+                'db_product.id',
+                'db_product.name',
+                'db_product.image',
+                'db_product.price',
+                'db_product.slug',
+                'db_product.created_at',
+                DB::raw('MIN(db_productsale.price_sale) as price_sale'),
+                'productstore.sum_qty_store',
+                'orderdetail.sum_qty_selled',
+                'review.avg_rating',
+            )
+            ->groupBy('db_product.id');
             
         if ($condition->has('prices')) {
             $query->whereBetween('price', [
@@ -312,8 +474,17 @@ class ProductController extends Controller
 
     public function product_brand($brand_id, Request $condition)
     {
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty'))
-        ->groupBy('product_id');
+        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+            ->groupBy('product_id');
+
+        $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
+            ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+            ->whereNotIn('db_order.status', [0, 5, 6])
+            ->groupBy('product_id'); 
+
+        $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
+            ->groupBy('product_id'); 
+
         $query = Product::where([['brand_id', '=', $brand_id], ['status', '=', 1]])
             ->joinSub($productstore, 'productstore', function($join){
                 $join->on('db_product.id', '=', 'productstore.product_id');
@@ -323,12 +494,30 @@ class ProductController extends Controller
                     ->where('db_productsale.date_begin', '<=', Carbon::now())
                     ->where('db_productsale.date_end', '>=', Carbon::now());
             })
-            ->select('db_product.id','db_product.name', 'db_product.image', 'db_product.price','db_product.slug', 'db_product.created_at', 'db_productsale.price_sale');
-            
+            ->leftJoinSub($orderdetail, 'orderdetail', function($join){
+                $join->on('db_product.id', '=', 'orderdetail.product_id');
+            })
+            ->leftJoinSub($review, 'review', function($join){
+                $join->on('db_product.id', '=', 'review.product_id');
+            }) 
+            ->select(
+                'db_product.id',
+                'db_product.name',
+                'db_product.image',
+                'db_product.price',
+                'db_product.slug',
+                'db_product.created_at',
+                DB::raw('MIN(db_productsale.price_sale) as price_sale'),
+                'productstore.sum_qty_store',
+                'orderdetail.sum_qty_selled',
+                'review.avg_rating',
+            )
+            ->groupBy('db_product.id'); 
+
         if ($condition->has('prices')) {
             $query->whereBetween('price', [
-                $condition->prices['from'] ?? 0,
-                $condition->prices['to'] ?? 1000000,
+                $condition->prices['from'],
+                $condition->prices['to'],
             ]);
         }
         if ($condition->has('sort')) {
@@ -349,38 +538,72 @@ class ProductController extends Controller
             200
         );
     }
-    function product_order($id, $limit)
-    {
-        $args = [
-            ['id', '=', $id],
-            ['status', '=', 1]
-        ];
-        $products = Product::where($args)
-            ->orderBy('created_at', 'DESC')
-            -> limit($limit)
-            ->get();
-        return response()->json(
-            [
-                'status' => true,
-                'message' => 'Tải dữ liệu thành công',
-                'products' => $products
-            ],
-            200
-        );
-    }
+    // function product_order($id, $limit)
+    // {
+    //     $args = [
+    //         ['id', '=', $id],
+    //         ['status', '=', 1]
+    //     ];
+    //     $products = Product::where($args)
+    //         ->orderBy('created_at', 'DESC')
+    //         -> limit($limit)
+    //         ->get();
+    //     return response()->json(
+    //         [
+    //             'status' => true,
+    //             'message' => 'Tải dữ liệu thành công',
+    //             'products' => $products
+    //         ],
+    //         200
+    //     );
+    // }
     public function product_detail($slug)
     {
+        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+        ->groupBy('product_id');
+
+        $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
+            ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+            ->whereNotIn('db_order.status', [0, 5, 6])
+            ->groupBy('product_id'); 
+
+        $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
+            ->groupBy('product_id'); 
+
         $args = [
             ['slug', '=', $slug],
             ['status', '=', 1]
         ];
+
         $product = Product::where($args)
             ->leftJoin('db_productsale', function ($join) {
                 $join->on('db_product.id', '=', 'db_productsale.product_id')
                     ->where('db_productsale.date_begin', '<=', Carbon::now())
                     ->where('db_productsale.date_end', '>=', Carbon::now());
             })
-            ->select('db_product.id','db_product.name', 'db_product.image', 'db_product.price','db_product.slug', 'db_productsale.price_sale',  'db_product.detail')
+            ->leftJoinSub($productstore, 'productstore', function($join){
+                $join->on('db_product.id', '=', 'productstore.product_id');
+            })
+            ->leftJoinSub($orderdetail, 'orderdetail', function($join){
+                $join->on('db_product.id', '=', 'orderdetail.product_id');
+            })
+            ->leftJoinSub($review, 'review', function($join){
+                $join->on('db_product.id', '=', 'review.product_id');
+            }) 
+            ->select(
+                'db_product.id',
+                'db_product.name',
+                'db_product.image',
+                'db_product.price',
+                'db_product.slug',
+                'db_product.detail',
+                'db_product.metadesc',
+                DB::raw('MIN(db_productsale.price_sale) as price_sale'),
+                'productstore.sum_qty_store',
+                'orderdetail.sum_qty_selled',
+                'review.avg_rating',
+            )
+            ->groupBy('db_product.id')
             ->first();
         if($product == null){
             return response()->json(
@@ -413,8 +636,8 @@ class ProductController extends Controller
                 }
             }
         }
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty'))
-        ->groupBy('product_id');
+
+
         $product_other = Product::where([['db_product.id', '!=', $product->id],['status', '=', 1]])
             ->joinSub($productstore, 'productstore', function($join){
                 $join->on('db_product.id', '=', 'productstore.product_id');
@@ -425,7 +648,24 @@ class ProductController extends Controller
                     ->where('db_productsale.date_begin', '<=', Carbon::now())
                     ->where('db_productsale.date_end', '>=', Carbon::now());
             })
-            ->select('db_product.id','db_product.name', 'db_product.image', 'db_product.price','db_product.slug')
+            ->leftJoinSub($orderdetail, 'orderdetail', function($join){
+                $join->on('db_product.id', '=', 'orderdetail.product_id');
+            })
+            ->leftJoinSub($review, 'review', function($join){
+                $join->on('db_product.id', '=', 'review.product_id');
+            }) 
+            ->select(
+                'db_product.id',
+                'db_product.name',
+                'db_product.image',
+                'db_product.price',
+                'db_product.slug',
+                DB::raw('MIN(db_productsale.price_sale) as price_sale'),
+                'productstore.sum_qty_store',
+                'orderdetail.sum_qty_selled',
+                'review.avg_rating',
+            )
+            ->groupBy('db_product.id')
             ->orderBy("db_product.created_at", 'DESC')
             ->limit(8)
             ->get();
@@ -441,49 +681,75 @@ class ProductController extends Controller
     }
     public function search(Request $request)
     {
-            $search = $request->input('key');
-            $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty'))->groupBy('product_id');
-            $products = Product::where('db_product.status', '=', 1)
-                ->joinSub($productstore, 'productstore', function ($join) {
-                    $join->on('db_product.id', '=', 'productstore.product_id');
-                })
-                ->leftJoin('db_category', 'db_product.category_id', '=', 'db_category.id')
-                ->leftJoin('db_brand', 'db_product.brand_id', '=', 'db_brand.id')
-                ->where(function ($query) use ($search) {
-                    $query->where('db_product.name', 'LIKE', "%$search%")
-                        ->orWhere('db_category.name', 'like', '%' . $search . '%')
-                        ->orWhere('db_brand.name', 'like', '%' . $search . '%');
-                })
-                ->leftJoin('db_productsale', function ($join) {
-                    $join->on('db_product.id', '=', 'db_productsale.product_id')
-                        ->where('db_productsale.date_begin', '<=', Carbon::now())
-                        ->where('db_productsale.date_end', '>=', Carbon::now());
-                })
-                ->select('db_product.id', 'db_product.name', 'db_product.image', 'db_product.price', 'db_product.slug', 'db_productsale.price_sale')
-                ->orderBy('db_product.created_at', "DESC")
-                ->get();
-            
-            $posts = Post::where([['status', '=', 1], ['type', '=', 'post']])
-                ->where(function ($query) use ($search) {
-                    $query->where('title', 'LIKE', "%$search%")
-                        ->orWhere('metadesc', 'LIKE', "%$search%");
-                })
-                ->orWhereHas('topic', function ($query) use ($search) {
-                    $query->where('name', 'LIKE', "%$search%");
-                })
-                ->orderBy('created_at', "DESC")
-                ->get();
-            return response()->json(
-                [
-                    'status' => true,
-                    'message' => 'Tải dữ liệu thành công',
-                    'products' => $products,
-                    'posts' => $posts,
-                    'search' => $search,
+        $search = $request->input('key');
+        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))->groupBy('product_id');
 
-                ],
-                200
-            );   
+        $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
+            ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+            ->whereNotIn('db_order.status', [0, 5, 6])
+            ->groupBy('product_id'); 
+
+        $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
+            ->groupBy('product_id'); 
+
+        $products = Product::where('db_product.status', '=', 1)
+            ->joinSub($productstore, 'productstore', function ($join) {
+                $join->on('db_product.id', '=', 'productstore.product_id');
+            })
+            ->leftJoin('db_category', 'db_product.category_id', '=', 'db_category.id')
+            ->leftJoin('db_brand', 'db_product.brand_id', '=', 'db_brand.id')
+            ->where(function ($query) use ($search) {
+                $query->where('db_product.name', 'LIKE', "%$search%")
+                    ->orWhere('db_category.name', 'like', '%' . $search . '%')
+                    ->orWhere('db_brand.name', 'like', '%' . $search . '%');
+            })
+            ->leftJoinSub($orderdetail, 'orderdetail', function($join){
+                $join->on('db_product.id', '=', 'orderdetail.product_id');
+            })    
+            ->leftJoin('db_productsale', function ($join) {
+                $join->on('db_product.id', '=', 'db_productsale.product_id')
+                    ->where('db_productsale.date_begin', '<=', Carbon::now())
+                    ->where('db_productsale.date_end', '>=', Carbon::now());
+            })
+            ->leftJoinSub($review, 'review', function($join){
+                $join->on('db_product.id', '=', 'review.product_id');
+            }) 
+            ->select(
+                'db_product.id',
+                'db_product.name',
+                'db_product.image',
+                'db_product.price',
+                'db_product.slug',
+                DB::raw('MIN(db_productsale.price_sale) as price_sale'),
+                'productstore.sum_qty_store',
+                'orderdetail.sum_qty_selled',
+                'review.avg_rating',
+            )
+            ->groupBy('db_product.id')
+            ->orderBy('db_product.created_at', "DESC")
+            ->get();
+        
+        $posts = Post::where([['status', '=', 1], ['type', '=', 'post']])
+            ->where(function ($query) use ($search) {
+                $query->where('title', 'LIKE', "%$search%")
+                    ->orWhere('metadesc', 'LIKE', "%$search%");
+            })
+            ->orWhereHas('topic', function ($query) use ($search) {
+                $query->where('name', 'LIKE', "%$search%");
+            })
+            ->orderBy('created_at', "DESC")
+            ->get();
+        return response()->json(
+            [
+                'status' => true,
+                'message' => 'Tải dữ liệu thành công',
+                'products' => $products,
+                'posts' => $posts,
+                'search' => $search,
+
+            ],
+            200
+        );   
     }
     public function action_trash(Request $request)
     {
@@ -514,7 +780,9 @@ class ProductController extends Controller
         $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
             ->groupBy('product_id');
         $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
-        ->groupBy('product_id');
+                ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+                ->whereNotIn('db_order.status', [0, 5, 6])
+                ->groupBy('product_id');
         $query = Product::where('db_product.status','=', 0)
             ->joinSub($productstore, 'productstore', function($join){
                 $join->on('db_product.id', '=', 'productstore.product_id');
@@ -569,7 +837,7 @@ class ProductController extends Controller
             ->groupBy('product_id');
         $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
                 ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
-                ->whereNotIn('db_order.status', [0, 5])
+                ->whereNotIn('db_order.status', [0, 5, 6])
                 ->groupBy('product_id'); 
         $query = Product::where('db_product.status','!=', 0)
             ->leftJoinSub($productstore, 'productstore', function($join){
@@ -580,7 +848,19 @@ class ProductController extends Controller
             ->leftJoinSub($orderdetail, 'orderdetail', function($join){
                 $join->on('db_product.id', '=', 'orderdetail.product_id');
             })
-            ->select('db_category.name as categoryname', 'db_brand.name as brandname','db_product.id','db_product.name', 'db_product.status','db_product.image', 'db_product.price','db_product.slug', 'db_product.created_at', 'productstore.sum_qty_store', 'orderdetail.sum_qty_selled')
+            ->select(
+                'db_category.name as categoryname',
+                'db_brand.name as brandname',
+                'db_product.id',
+                'db_product.name',
+                'db_product.status',
+                'db_product.image',
+                'db_product.price',
+                'db_product.slug',
+                'db_product.created_at',
+                'productstore.sum_qty_store',
+                'orderdetail.sum_qty_selled'
+            )
             ->orderBy('db_product.created_at', 'DESC');
         if ($condition->input('brandId') != null) {
             $query->where('brand_id', $condition->input('brandId'));

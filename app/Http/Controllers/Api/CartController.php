@@ -38,6 +38,7 @@ class CartController extends Controller
                     ->join('db_product as p', 'db_cart_item.product_id', '=', 'p.id')
                     ->leftJoin('db_productsale', function ($join) {
                         $join->on('p.id', '=', 'db_productsale.product_id')
+                            ->orOn('db_cart_item.variant_id', '=', 'db_productsale.variant_id')
                             ->where('db_productsale.date_begin', '<=', Carbon::now())
                             ->where('db_productsale.date_end', '>=', Carbon::now());
                     })
@@ -149,8 +150,8 @@ class CartController extends Controller
             //ngực lại thêm mới
             else {
                 $variant = ProductVariant::findOrFail($variantId);
-                $price = $variant->price;
-                $cost = $variant->cost;
+                // $price = $variant->price;
+                // $cost = $variant->cost;
                 CartItem::create([
                     'cart_id' => $cart->id,
                     'product_id' => $productId,
@@ -199,6 +200,7 @@ class CartController extends Controller
         ->join('db_product as p', 'db_cart_item.product_id', '=', 'p.id')
         ->leftJoin('db_productsale', function ($join) {
             $join->on('p.id', '=', 'db_productsale.product_id')
+                ->orOn('db_cart_item.variant_id', '=', 'db_productsale.variant_id')
                 ->where('db_productsale.date_begin', '<=', Carbon::now())
                 ->where('db_productsale.date_end', '>=', Carbon::now());
         })

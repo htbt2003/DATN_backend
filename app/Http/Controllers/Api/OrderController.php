@@ -174,52 +174,90 @@ class OrderController extends Controller
 
     public function trash(Request $condition)
     {
-        $query = Order::where('status', '=', 0)
+        //0: Chờ xác nhận
+        //1: Đã xác nhận
+        //2: Chờ lấy hàng
+        //3: Đang giao hàng
+        //4: Đã giao hàng
+        //5: Đã hủy
+        //6: Đã trả lại
+        //7: Rác
+        $orderdetail = OrderDetail::select('order_id', DB::raw('SUM(price * qty) as total_amount'), DB::raw('SUM(qty) as total_qty'))->groupBy('order_id');
+
+        $query = Order::where('status', '=', 7)
             ->orderBy('created_at', 'DESC')
-            ->select('id', 'user_id', 'phone', 'email', 'created_at', 'status' );
+            ->select('id', 'user_id', 'name', 'phone', 'email', 'created_at', 'status', 'orderdetail.total_amount', 'orderdetail.total_qty')
+            ->leftJoinSub($orderdetail, 'orderdetail', function ($join) {
+                $join->on('db_order.id', '=', 'orderdetail.order_id');
+            });
+
         if ($condition->input('keySearch') != null ) {
             $key = $condition->input('keySearch');
             $query->where(function ($query) use ($key) {
                 $query->where('db_order.name', 'like', '%' . $key . '%');
             });
         }
-        $total = Order::where('status', '!=', 0)->count();
+
+        if ($condition->input('status') != null) {
+            $query->where('status', $condition->input('status'));
+        }
+
+        $total = Order::where('status', '!=', 7)->count();
         $orders = $query->paginate(5);
-        $total = $orders->total();
-        $trash = Order::where('status', '=', 0)->count();
-        $publish = Order::where('status', '=', 1)->count();
+        $trash = Order::where('status', '=', 7)->count();
+        // $publish = Order::where('status', '=', 7)->count();
         $result = [
             'status' => true, 
             'message' => 'Tải dữ liệu thành công',
             'orders' => $orders,
             'total' => $total,
-            'publish' => $publish,
+            // 'publish' => $publish,
             'trash' => $trash,
         ];
         return response()->json($result,200);
+
     }
 
     public function index(Request $condition)
     {
-        $query = Order::where('status', '!=', 0)
-        ->orderBy('created_at', 'DESC')
-        ->select('id', 'user_id', 'phone', 'email', 'created_at', 'status' );
+        //0: Chờ xác nhận
+        //1: Đã xác nhận
+        //2: Chờ lấy hàng
+        //3: Đang giao hàng
+        //4: Đã giao hàng
+        //5: Đã hủy
+        //6: Đã trả lại
+        //7: Rác
+        $orderdetail = OrderDetail::select('order_id', DB::raw('SUM(price * qty) as total_amount'), DB::raw('SUM(qty) as total_qty'))->groupBy('order_id');
+
+        $query = Order::where('status', '!=', 7)
+            ->orderBy('created_at', 'DESC')
+            ->select('id', 'user_id', 'name', 'phone', 'email', 'created_at', 'status', 'orderdetail.total_amount', 'orderdetail.total_qty')
+            ->leftJoinSub($orderdetail, 'orderdetail', function ($join) {
+                $join->on('db_order.id', '=', 'orderdetail.order_id');
+            });
+
         if ($condition->input('keySearch') != null ) {
             $key = $condition->input('keySearch');
             $query->where(function ($query) use ($key) {
                 $query->where('db_order.name', 'like', '%' . $key . '%');
             });
         }
+
+        if ($condition->input('status') != null) {
+            $query->where('status', $condition->input('status'));
+        }
+
         $total = $query->count();
         $orders = $query->paginate(5);
-        $trash = Order::where('status', '=', 0)->count();
-        $publish = Order::where('status', '=', 1)->count();
+        $trash = Order::where('status', '=', 7)->count();
+        // $publish = Order::where('status', '=', 7)->count();
         $result = [
             'status' => true, 
             'message' => 'Tải dữ liệu thành công',
             'orders' => $orders,
             'total' => $total,
-            'publish' => $publish,
+            // 'publish' => $publish,
             'trash' => $trash,
         ];
         return response()->json($result,200);
@@ -229,20 +267,16 @@ class OrderController extends Controller
     public function show($id)
     {
         $orders = array();
-        $orderDetail=OrderDetail::where('order_id', $id)->get();
-        foreach($orderDetail as $row)
-        {
-            $order = order::find($row->order_id);
-            if($order != null)
-                $order["quantity"] = $row->qty;
-                array_push($orders, $order);
-        }
+        $orderDetail=OrderDetail::where('db_orderdetail.order_id', $id)
+            ->join('db_product as p', 'db_orderdetail.product_id', '=', 'p.id')
+            ->select('db_orderdetail.id', 'db_orderdetail.price', 'db_orderdetail.qty', 'db_orderdetail.created_at', 'db_orderdetail.variant_id', 'p.name', 'p.image',)
+            ->get();
         $order = Order::find($id);
         return response()->json(
             ['success' => true, 
              'message' => 'Tải dữ liệu thành công', 
              'order' => $order,
-             'orders' => $orders
+             'orderDetails' => $orderDetails
             ],
             200
         );
