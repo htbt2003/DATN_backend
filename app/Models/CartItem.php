@@ -13,13 +13,14 @@ class CartItem extends Model
     protected $fillable = [
         'cart_id', 
         'product_id', 
-        'variant_id ', 
+        'variant_id', 
         'quantity', 
         'price', 
         'cost', 
     ];
     public $timestamps = false;
     protected $with = ['variant'];
+    
     public function variant()
     {
         return $this->belongsTo(ProductVariant::class);

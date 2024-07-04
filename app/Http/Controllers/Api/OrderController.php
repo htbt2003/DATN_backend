@@ -269,14 +269,14 @@ class OrderController extends Controller
         $orders = array();
         $orderDetail=OrderDetail::where('db_orderdetail.order_id', $id)
             ->join('db_product as p', 'db_orderdetail.product_id', '=', 'p.id')
-            ->select('db_orderdetail.id', 'db_orderdetail.price', 'db_orderdetail.qty', 'db_orderdetail.created_at', 'db_orderdetail.variant_id', 'p.name', 'p.image',)
+            ->select('db_orderdetail.id', 'db_orderdetail.price as price_bill', 'db_orderdetail.qty', 'db_orderdetail.created_at', 'db_orderdetail.variant_id', 'p.name', 'p.image', 'p.price as price_product')
             ->get();
         $order = Order::find($id);
         return response()->json(
             ['success' => true, 
              'message' => 'Tải dữ liệu thành công', 
              'order' => $order,
-             'orderDetails' => $orderDetails
+             'orderDetails' => $orderDetail,
             ],
             200
         );

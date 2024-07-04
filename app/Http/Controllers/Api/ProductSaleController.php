@@ -9,17 +9,66 @@ use App\Models\Product;
 
 class ProductSaleController extends Controller
 {
-    public function index()
+    public function index(Request $condition)
     {
-        $prosales = ProductSale::select('id', 'product_id', 'qty', 'date_begin', 'date_end','price_sale')
-            ->orderBy('created_at', 'DESC')
+        $product = Product::select([
+                'db_product.id', 
+                'db_product.price', 
+                'db_product.cost', 
+                'db_product.name', 
+                'db_product.image', 
+                'db_product.category_id',
+                'db_product.brand_id',
+                'db_category.name as categoryname',
+                'db_brand.name as brandname',
+            ])
+            ->leftJoin('db_category', 'db_product.category_id', '=', 'db_category.id')
+            ->leftJoin('db_brand', 'db_product.brand_id', '=', 'db_brand.id');
+             
+        $query = ProductSale::joinSub($product, 'product', function($join){
+                $join->on('db_productsale.id', '=', 'product.id');
+            })
+            ->select([
+                'db_productsale.id', 
+                'db_productsale.variant_id', 
+                'product.price', 
+                'db_productsale.price_sale', 
+                'db_productsale.qty', 
+                'product.cost', 
+                'product.name', 
+                'product.image', 
+                'db_productsale.date_begin',
+                'db_productsale.date_end',
+                'product.categoryname',
+                'product.brandname',
+                'product.category_id',
+                'product.brand_id',
+            ])
+            if ($condition->input('brandId') != null) {
+                $query->where('product.brand_id', $condition->input('brandId'));
+            }
+    
+            if ($condition->input('catId') != null ) {
+                
+                $query->where('product.category_id', $condition->input('catId'));
+            }
+    
+            if ($condition->input('keySearch') != null ) {
+                $key = $condition->input('keySearch');
+                $query->where(function ($query) use ($key) {
+                    $query->where('product.name', 'like', '%' . $key . '%')
+                        ->orWhere('product.categoryname', 'like', '%' . $key . '%')
+                        ->orWhere('product.brandname', 'like', '%' . $key . '%');
+                });
+            }
+            ->orderBy('db_productsale.created_at', 'DESC')
             ->paginate(5);
         $total = ProductSale::count();
         return response()->json(
             [
                 'status' => true, 
                 'message' => 'Tải dữ liệu thành công',
-                'prosales' => $prosales,
+                'prosales' => $query,
                 'total' => $total
             ],
             200

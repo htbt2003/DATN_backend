@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Brand;
+use App\Models\ProductVariant;
 
 class ProductStore extends Model
 {
@@ -18,6 +19,11 @@ class ProductStore extends Model
     // {
     //     return $this->belongsTo(Product::class);
     // }
+    protected $with = ['variant'];
+    public function variant()
+    {
+        return $this->belongsTo(ProductVariant::class);
+    }
 
 }
 

@@ -42,7 +42,18 @@ class CartController extends Controller
                             ->where('db_productsale.date_begin', '<=', Carbon::now())
                             ->where('db_productsale.date_end', '>=', Carbon::now());
                     })
-                    ->select('db_cart_item.id', 'db_cart_item.variant_id', 'db_cart_item.status', 'p.price', 'db_productsale.price_sale','db_cart_item.quantity', 'p.cost', 'p.name', 'p.image', 'db_cart_item.product_id',)
+                    ->select([
+                        'db_cart_item.id', 
+                        'db_cart_item.variant_id', 
+                        'db_cart_item.status', 
+                        'p.price', 
+                        'db_productsale.price_sale', 
+                        'db_cart_item.quantity', 
+                        'p.cost', 
+                        'p.name', 
+                        'p.image', 
+                        'db_cart_item.product_id'
+                    ])
                     ->get();
 
         return response()->json(
@@ -126,9 +137,9 @@ class CartController extends Controller
         $variantId = $request->input('variant_id');
         $productId = $request->input('product_id');
         $quantityToAdd = $request->input('quantity');
-        $product = Product::findOrFail($productId);
-        $price = $product->price;
-        $cost = $product->cost;
+        // $product = Product::findOrFail($productId);
+        // $price = $product->price;
+        // $cost = $product->cost;
         //Kiểm tra sô lượng tồn kho----------------
         $inventoryCheck = $this->ckeck_inventory($productId, $variantId, $quantityToAdd);
         if ($inventoryCheck) {
@@ -147,9 +158,9 @@ class CartController extends Controller
                 $cartItem->quantity += $quantityToAdd;
                 $cartItem->save();
             } 
-            //ngực lại thêm mới
+            //ngược lại thêm mới
             else {
-                $variant = ProductVariant::findOrFail($variantId);
+                // $variant = ProductVariant::findOrFail($variantId);
                 // $price = $variant->price;
                 // $cost = $variant->cost;
                 CartItem::create([

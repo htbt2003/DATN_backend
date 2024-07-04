@@ -145,10 +145,7 @@ class CustomerController extends Controller
         $user->gender = $request->gender; //form
         $user->email = $request->email; //form
         $user->phone = $request->phone; //form
-        $user->username = $request->username; //form
-        $user->password = $request->password; //form
         $user->address = $request->address; //form
-        $slug = Str::of($request->name)->slug('-');
         //upload image
         $files = $request->image;
         if ($files != null) {
@@ -205,10 +202,7 @@ class CustomerController extends Controller
         $user->gender = $request->gender; //form
         $user->email = $request->email; //form
         $user->phone = $request->phone; //form
-        $user->username = $request->username; //form
-        $user->password = $request->password; //form
         $user->address = $request->address; //form
-        $slug = Str::of($request->name)->slug('-');
         //upload image
         $files = $request->image;
         if ($files != null) {
