@@ -300,30 +300,6 @@ class ProductController extends Controller
         }
     }
 
-    public function product_stores()
-    {
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty'))
-        ->groupBy('product_id');
-        $query = Product::where('db_product.status','=', 1)
-            ->joinSub($productstore, 'productstore', function($join){
-                $join->on('db_product.id', '=', 'productstore.product_id');
-            })
-            ->leftJoin('db_category', 'db_product.category_id', '=', 'db_category.id')
-            ->leftJoin('db_brand', 'db_product.brand_id', '=', 'db_brand.id')
-            ->orderBy('db_product.created_at', 'DESC')
-            ->select('db_product.id','db_product.name', 'db_product.image', 'db_product.price','db_product.slug', 'db_category.name as categoryname', 'db_brand.name as brandname');           
-        $total = $query->count();
-        $products = $query->paginate(5);
-        return response()->json(
-            [
-                'status' => true,
-                'message' => 'Tải dữ liệu thành công',
-                'products' => $products,
-                'total' => $total,
-            ],
-            200
-        );
-    }
     public function product_allAction(Request $condition)
     {
         $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
@@ -817,6 +793,85 @@ class ProductController extends Controller
             200
         );   
     }
+    public function product_stores(Request $condition)
+    {
+        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+        ->groupBy('product_id');
+
+        $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
+            ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+            ->whereNotIn('db_order.status', [0, 5, 6])
+            ->groupBy('product_id'); 
+
+       $productsale = ProductSale::select('db_productsale.product_id', DB::raw('MIN(price_sale) as price_sale'), DB::raw('SUM(db_productsale.qty) as sum_qty_sale'))
+            ->where('date_begin', '<=', Carbon::now())
+            ->where('date_end', '>=', Carbon::now())
+            ->where('qty', '>', 0)
+            ->groupBy('db_productsale.product_id');
+
+        $query = Product::where('db_product.status','=', 1)
+            ->joinSub($productstore, 'productstore', function($join){
+                $join->on('db_product.id', '=', 'productstore.product_id');
+            })
+            ->leftJoin('db_category', 'db_product.category_id', '=', 'db_category.id')
+            ->leftJoin('db_brand', 'db_product.brand_id', '=', 'db_brand.id')
+            ->leftJoinSub($productsale, 'productsale', function ($join) {
+                $join->on('db_product.id', '=', 'productsale.product_id');
+            })
+            ->leftJoinSub($orderdetail, 'orderdetail', function($join){
+                $join->on('db_product.id', '=', 'orderdetail.product_id');
+            }) 
+            ->select(
+                'db_product.id',
+                'db_product.name',
+                'db_product.image',
+                'db_product.price',
+                'db_product.slug',
+                'productsale.price_sale',
+                // 'productsale.sum_qty_sale_selled',
+                'productstore.sum_qty_store',
+                'orderdetail.sum_qty_selled',
+                'db_category.name as categoryname',
+                'db_brand.name as brandname',
+            )
+            ->orderBy('db_product.created_at', 'DESC');
+
+        if ($condition->input('brandId') != null) {
+            $query->where('brand_id', $condition->input('brandId'));
+        }
+
+        if ($condition->input('catId') != null ) {
+            
+            $query->where('category_id', $condition->input('catId'));
+        }
+
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_product.name', 'like', '%' . $key . '%')
+                    ->orWhere('db_category.name', 'like', '%' . $key . '%')
+                    ->orWhere('db_brand.name', 'like', '%' . $key . '%');
+            });
+        }
+
+        $total = $query->count();
+        $products = $query->paginate(5);
+        $categories = Category::where('status', '=', '1')->select('id', 'name')->get();
+        $brands = Brand::where('status', '=', '1')->select('id', 'name')->get();
+
+        return response()->json(
+            [
+                'status' => true,
+                'message' => 'Tải dữ liệu thành công',
+                'products' => $products,
+                'total' => $total,
+                'categories' => $categories,
+                'brands' => $brands,
+            ],
+            200
+        );
+    }
+
     public function action_trash(Request $request)
     {
         $listId = $request->input('listId');

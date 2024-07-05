@@ -37,10 +37,14 @@ class CartController extends Controller
         $ListCart = CartItem::where('cart_id', '=', $cart->id)
                     ->join('db_product as p', 'db_cart_item.product_id', '=', 'p.id')
                     ->leftJoin('db_productsale', function ($join) {
-                        $join->on('p.id', '=', 'db_productsale.product_id')
-                            ->orOn('db_cart_item.variant_id', '=', 'db_productsale.variant_id')
+                        $join->on('db_cart_item.product_id', '=', 'db_productsale.product_id')
+                            ->where(function ($query) {
+                                $query->whereNull('db_cart_item.variant_id')
+                                    ->orWhereColumn('db_cart_item.variant_id', 'db_productsale.variant_id');
+                            })
                             ->where('db_productsale.date_begin', '<=', Carbon::now())
-                            ->where('db_productsale.date_end', '>=', Carbon::now());
+                            ->where('db_productsale.date_end', '>=', Carbon::now())
+                            ->where('qty', '>', 0);
                     })
                     ->select([
                         'db_cart_item.id', 
@@ -65,6 +69,32 @@ class CartController extends Controller
             200
         );
     }
+    public function list_selected($deviceId)
+    {   
+        $cart = Cart::where('deviceId', '=', $deviceId)->first();
+        $ListCart = CartItem::where([['db_cart_item.status','=', 1],['db_cart_item.cart_id','=', $cart->id]])
+        ->join('db_product as p', 'db_cart_item.product_id', '=', 'p.id')
+        ->leftJoin('db_productsale', function ($join) {
+            $join->on('p.id', '=', 'db_productsale.product_id')
+                ->where(function ($query) {
+                    $query->whereNull('db_cart_item.variant_id')
+                        ->orWhereColumn('db_cart_item.variant_id', 'db_productsale.variant_id');
+                })
+                ->where('db_productsale.date_begin', '<=', Carbon::now())
+                ->where('db_productsale.date_end', '>=', Carbon::now())
+                ->where('qty', '>', 0);
+        })
+        ->select('db_cart_item.id', 'db_cart_item.variant_id', 'db_cart_item.product_id', 'p.price', 'db_productsale.price_sale','db_cart_item.quantity', 'p.cost', 'p.name', 'p.image', 'db_cart_item.status',)
+        ->get();
+
+
+        if ($ListCart) {
+            return response()->json(['status' => true, 'message' => 'Cập nhật số lượng sản phẩm thành công', 'ListCart' => $ListCart,]);
+        } 
+        else {
+            return response()->json(['status' => false, 'message' => 'Không có sản phẩm']);
+        }
+    }
 
     private function ckeck_inventory($productId, $variantId, $quantityToAdd)
     {
@@ -76,7 +106,7 @@ class CartController extends Controller
         $orderdetailQuery = OrderDetail::where('product_id', $productId)
             ->select(DB::raw('SUM(db_orderdetail.qty) as sum_qty_selled'))
             ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
-            ->whereNotIn('db_order.status', [0, 5]); // Loại trừ các trạng thái 0 và 5
+            ->whereNotIn('db_order.status', [0, 5, 6]); // Loại trừ các trạng thái 0 và 5
 
         if ($variantId) {
             $productstoreQuery->where('variant_id', $variantId)
@@ -202,28 +232,6 @@ class CartController extends Controller
         } 
         else {
             return response()->json(['status' => false, 'message' => 'Sản phẩm không tồn tại trong giỏ hàng']);
-        }
-    }
-    public function list_selected($deviceId)
-    {   
-        $cart = Cart::where('deviceId', '=', $deviceId)->first();
-        $ListCart = CartItem::where([['db_cart_item.status','=', 1],['db_cart_item.cart_id','=', $cart->id]])
-        ->join('db_product as p', 'db_cart_item.product_id', '=', 'p.id')
-        ->leftJoin('db_productsale', function ($join) {
-            $join->on('p.id', '=', 'db_productsale.product_id')
-                ->orOn('db_cart_item.variant_id', '=', 'db_productsale.variant_id')
-                ->where('db_productsale.date_begin', '<=', Carbon::now())
-                ->where('db_productsale.date_end', '>=', Carbon::now());
-        })
-        ->select('db_cart_item.id', 'db_cart_item.variant_id', 'db_cart_item.product_id', 'p.price', 'db_productsale.price_sale','db_cart_item.quantity', 'p.cost', 'p.name', 'p.image', 'db_cart_item.status',)
-        ->get();
-
-
-        if ($ListCart) {
-            return response()->json(['status' => true, 'message' => 'Cập nhật số lượng sản phẩm thành công', 'ListCart' => $ListCart,]);
-        } 
-        else {
-            return response()->json(['status' => false, 'message' => 'Không có sản phẩm']);
         }
     }
 

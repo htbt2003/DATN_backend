@@ -57,7 +57,7 @@ class OrderController extends Controller
                 'variant_id' => $item['variant_id'],
                 'price' => $item['price'],
                 'qty' => $item['quantity'],
-                'price_root' => $item['cost'],
+                'price_root' => $item['cost'] ?? null,
                 'created_at' => now(),
             ]);
             CartItem::where('id', '=', $item['id'])->delete();

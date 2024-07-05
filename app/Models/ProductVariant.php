@@ -21,8 +21,8 @@ class ProductVariant extends Model
     public function sale()
     {
         return $this->belongsTo(ProductSale::class)
-                ->where('date_begin', '<=', Carbon::today())
-                ->where('date_end', '>=', Carbon::today())
+                ->where('date_begin', '<=', Carbon::now())
+                ->where('date_end', '>=', Carbon::now())
                 ->where('qty', '>', 0)
                 ->select('price_sale');
     }

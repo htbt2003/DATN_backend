@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ProductStore;
 use App\Models\Product;
+use App\Models\Category;
+use App\Models\Brand;
+use App\Models\OrderDetail;
 use Illuminate\Support\Facades\DB;
 
 class ProductStoreController extends Controller
@@ -26,8 +29,8 @@ class ProductStoreController extends Controller
             ->leftJoin('db_category', 'db_product.category_id', '=', 'db_category.id')
             ->leftJoin('db_brand', 'db_product.brand_id', '=', 'db_brand.id');
              
-        $query = ProductStore::joinSub($product, 'product', function($join){
-                $join->on('db_productstore.id', '=', 'product.id');
+        $query = ProductStore::leftJoinSub($product, 'product', function($join){
+                $join->on('db_productstore.product_id', '=', 'product.id');
             })
             ->select([
                 'db_productstore.id', 
@@ -38,13 +41,15 @@ class ProductStoreController extends Controller
                 'product.cost', 
                 'product.name', 
                 'product.image', 
-                'db_productstore.date_begin',
-                'db_productstore.date_end',
+                // 'db_productstore.date_begin',
+                // 'db_productstore.date_end',
                 'product.categoryname',
                 'product.brandname',
                 'product.category_id',
                 'product.brand_id',
             ])
+            ->orderBy('db_productstore.created_at', 'DESC');
+
             if ($condition->input('brandId') != null) {
                 $query->where('product.brand_id', $condition->input('brandId'));
             }
@@ -62,15 +67,19 @@ class ProductStoreController extends Controller
                         ->orWhere('product.brandname', 'like', '%' . $key . '%');
                 });
             }
-            ->orderBy('db_productstore.created_at', 'DESC')
-            ->paginate(5);
         $total = ProductStore::count();
+        $prostore = $query->paginate(5);
+        $categories = Category::where('status', '=', '1')->select('id', 'name')->get();
+        $brands = Brand::where('status', '=', '1')->select('id', 'name')->get();
+
         return response()->json(
             [
                 'status' => true, 
                 'message' => 'Tải dữ liệu thành công',
-                'prostore' => $query,
-                'total' => $total
+                'prostores' => $prostore,
+                'total' => $total,
+                'categories' => $categories,
+                'brands' => $brands,
             ],
             200
         );
@@ -104,6 +113,30 @@ class ProductStoreController extends Controller
 
     public function store(Request $request)
     {
+        // // Kiểm tra quyền admin
+        // $user = Auth::user();
+        // if (!$user->isAdmin()) {
+        //     return response()->json(['message' => 'Bạn không có quyền thực hiện hành động này'], 403);
+        // }
+        $product = ProductStore::select('cost')
+        ->where('db_product.product_id', '=', $request->product_id)
+        ->first();
+
+        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+        ->where('db_productstore.product_id', '=', $request->product_id)
+        ->groupBy('product_id')
+        ->first();
+
+        $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
+            ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+            ->whereNotIn('db_order.status', [0, 5, 6])
+            ->where('db_orderdetail.product_id', '=', $request->product_id)
+            ->groupBy('product_id')
+            ->first();
+
+        $cost = $product->cost;
+        $qty_inventory = $productstore->sum_qty_store - $orderdetail->sum_qty_selled;
+
         $prostore = new ProductStore();
         $prostore->product_id = $request->product_id;
         $prostore->price_root = $request->price_root; //form
@@ -112,8 +145,8 @@ class ProductStoreController extends Controller
         $prostore->created_by = 1;
         if($prostore->save())//Luuu vao CSDL
         {
-            $product = Product::where('id', $request->product_id);
-            Product::where('id', $request->product_id)->update(['cost' => 0]);
+            $newCost = (($cost * $qty_inventory) + ($request->price_root * $request->qty)) / ($qty_inventory + $request->qty);
+            Product::where('id', $request->product_id)->update(['cost' => $newcost]);
     
             return response()->json(
                 [
@@ -138,6 +171,11 @@ class ProductStoreController extends Controller
     }
     public function update(Request $request, $id)
     {
+        // // Kiểm tra quyền admin
+        // $user = Auth::user();
+        // if (!$user->isAdmin()) {
+        //     return response()->json(['message' => 'Bạn không có quyền thực hiện hành động này'], 403);
+        // }
         $prostore = ProductStore::find($id);
         if($prostore == null)//Luuu vao CSDL
         {
@@ -150,13 +188,36 @@ class ProductStoreController extends Controller
                 404
             );    
         }
+
+        $product = ProductStore::select('cost')
+        ->where('db_product.product_id', '=', $request->product_id)
+        ->first();
+
+        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+        ->where('db_productstore.product_id', '=', $request->product_id)
+        ->groupBy('product_id')
+        ->first();
+
+        $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
+            ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+            ->whereNotIn('db_order.status', [0, 5, 6])
+            ->where('db_orderdetail.product_id', '=', $request->product_id)
+            ->groupBy('product_id')
+            ->first();
+
+        $cost = $product->cost;
+        $qty_inventory = $productstore->sum_qty_store - $orderdetail->sum_qty_selled;
+
         $prostore->pty = $request->pty; //form
         $prostore->price_root = $request->price_root; //form
         $prostore->updated_at = date('Y-m-d H:i:s');
         $prostore->updated_by = 1;
-        $prostore->status = $request->status; //form
+
         if($prostore->save())//Luuu vao CSDL
         {
+            $newCost = (($cost * $qty_inventory) + ($request->price_root * $request->qty)) / ($qty_inventory + $request->qty);
+            Product::where('id', $request->product_id)->update(['cost' => $newcost]);
+        
             return response()->json(
                 [
                     'status' => true, 
