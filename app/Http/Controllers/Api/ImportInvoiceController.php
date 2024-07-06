@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ImportInvoice;
+use App\Models\OrderDetail;
+use App\Models\ProductStore;
+use App\Models\Product;
 
 class ImportInvoiceController extends Controller
 {
@@ -15,7 +18,10 @@ class ImportInvoiceController extends Controller
     
     // Create a new ImportInvoice instance
     $importInvoice = new ImportInvoice();
-    $importInvoice->user_id = $invoiceData['user_id'];
+    $order->name = $orderData['name']; 
+    $order->phone = $orderData['phone']; 
+    $order->email = $orderData['email']; 
+    $order->address = $orderData['address']; 
     $importInvoice->note = $invoiceData['note'];
     $importInvoice->created_at = now();
     $importInvoice->created_by = $invoiceData['user_id'];
@@ -69,53 +75,53 @@ class ImportInvoiceController extends Controller
     public function trash(Request $condition)
     {
         $query = ImportInvoice::where('status', '=', 0)
-            ->orderBy('created_at', 'DESC')
-            ->select('id', 'name', 'slug', 'status', 'image' );
-        if ($condition->input('keySearch') != null ) {
-            $key = $condition->input('keySearch');
-            $query->where(function ($query) use ($key) {
-                $query->where('db_import_invoice.note', 'like', '%' . $key . '%');
-            });
-        }
-        $total = ImportInvoice::where('status', '!=', 0)->count();
-        $invoices = $query->paginate(5);
-        $total = $invoices->total();
-        $trash = ImportInvoice::where('status', '=', 0)->count();
-        $publish = ImportInvoice::where('status', '=', 1)->count();
-        $result = [
-            'status' => true, 
-            'message' => 'Tải dữ liệu thành công',
-            'invoices' => $invoices,
-            'total' => $total,
-            'publish' => $publish,
-            'trash' => $trash,
-        ];
-        return response()->json($result,200);
-    }
-
-    public function index()
-    {
-        $query = ImportInvoice::where('status', '!=', 0)
         ->orderBy('created_at', 'DESC')
-        ->select('id', 'name', 'slug', 'status', 'image' );
+        ->select('id', 'created_by', 'name', 'phone', 'email', 'created_at', 'status');
         if ($condition->input('keySearch') != null ) {
             $key = $condition->input('keySearch');
             $query->where(function ($query) use ($key) {
                 $query->where('db_invoice.name', 'like', '%' . $key . '%');
             });
         }
-        $invoicesAll = $query->get(); 
-        $total = $query->count();
-        $invoices = $query->paginate(5);
-        $total = $invoices->total();
-        $trash = ImportInvoice::where('status', '=', 0)->count();
-        $publish = ImportInvoice::where('status', '=', 1)->count();
+        if ($condition->input('date') != null) {
+            $query->whereDate('created_at', $condition->input('date'));
+        }
+
+        $total = ImportInvoice::where('status', '!=', 0)->count();
+        $importInvoices = $query->paginate(5);
         $result = [
             'status' => true, 
             'message' => 'Tải dữ liệu thành công',
-            'invoices' => $invoices,
+            'importInvoices' => $importInvoices,
             'total' => $total,
-            'publish' => $publish,
+        ];
+        return response()->json($result,200);
+    }
+
+    public function index(Request $condition)
+    {
+        $query = ImportInvoice::where('status', '!=', 0)
+        ->orderBy('created_at', 'DESC')
+        ->select('id', 'created_by', 'name', 'phone', 'email', 'created_at', 'status');
+        if ($condition->input('keySearch') != null ) {
+            $key = $condition->input('keySearch');
+            $query->where(function ($query) use ($key) {
+                $query->where('db_invoice.name', 'like', '%' . $key . '%');
+            });
+        }
+        if ($condition->input('date') != null) {
+            $query->whereDate('created_at', $condition->input('date'));
+        }
+
+        $invoicesAll = $query->get(); 
+        $total = $query->count();
+        $importInvoices = $query->paginate(5);
+        $trash = ImportInvoice::where('status', '=', 0)->count();
+        $result = [
+            'status' => true, 
+            'message' => 'Tải dữ liệu thành công',
+            'importInvoices' => $importInvoices,
+            'total' => $total,
             'trash' => $trash,
             'invoicesAll' => $invoicesAll,
         ];
@@ -123,23 +129,6 @@ class ImportInvoiceController extends Controller
 
     }
 
-    public function index()
-    {
-        $invoices = ImportInvoice::where('status', '!=', 0)
-            ->orderBy('created_at', 'DESC')
-            ->select('id', 'invoice_id', 'status')
-            ->paginate(5);
-        $total = ImportInvoice::where('status', '!=', 0)->count();
-        return response()->json(
-            [
-                'status' => true, 
-                'message' => 'Tải dữ liệu thành công',
-                'invoices' => $invoices,
-                'total' => $total,
-            ],
-            200
-        );
-    }
     public function show($id)
     {
         $invoice = ImportInvoice::find($id);
@@ -165,22 +154,85 @@ class ImportInvoiceController extends Controller
             );    
         }
     }
-
     public function store(Request $request)
     {
-        $invoice = new invoiceImport();
-        $invoice->invoice_id = $request->invoice_id;
-        $invoice->price_root = $request->price_root; //form
-        $invoice->pty = $request->pty; //form
-        $invoice->created_at = date('Y-m-d H:i:s');
-        $invoice->created_by = 1;
+        $invoiceData = $request->importInvoice;
+    
+
+        // Create a new ImportInvoice instance
+        $importInvoice = new ImportInvoice();
+        $order->name = $orderData['name']; 
+        $order->phone = $orderData['phone']; 
+        $order->email = $orderData['email']; 
+        $order->address = $orderData['address']; 
+        $importInvoice->note = $invoiceData['note'];
+        $importInvoice->created_at = now();
+        $importInvoice->created_by = $invoiceData['user_id'];
+        $importInvoice->save();
+    
         if($invoice->save())//Luuu vao CSDL
         {
+            foreach ($request->Listinvoices as $invoice) {
+                DB::table('db_productstore')->insert([
+                    'import_invoice_id' => $importInvoice->id,
+                    'variant_id' => $invoice['variant_id'],
+                    'product_id' => $invoice['product_id'],
+                    'qty' => $invoice['qty'],
+                    'price_root' => $invoice['price_root'],
+                    'created_at' => now(),
+                ]);
+                if ($invoice['variant_id'] != null) {
+                    $product = ProductVariant::select('cost')
+                    ->where('db_product_variant.variant_id', '=', $invoice['variant_id'])
+                    ->first();
+                    $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+                        ->where('db_productstore.product_id', '=', $invoice['product_id'])
+                        ->where('db_productstore.variant_id', $invoice['variant_id'])
+                        ->groupBy('product_id', 'variant_id')
+                        ->first();
+                    $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
+                        ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+                        ->whereNotIn('db_order.status', [0, 5, 6])
+                        ->where('db_orderdetail.product_id', '=', $invoice['product_id'])
+                        ->where('db_orderdetail.variant_id', $invoice['variant_id'])
+                        ->groupBy('product_id', 'variant_id')
+                        ->first();
+
+                    $cost = $product->cost;
+                    $qty_inventory = $productstore->sum_qty_store - $orderdetail->sum_qty_selled;
+        
+                    $newCost = (($cost * $qty_inventory) + ($invoice['price_root'] * $request->qty)) / ($qty_inventory + $invoice['qty']);
+                    ProductVariant::where('id', $request->variant_id)->update(['cost' => $newcost]);
+            
+                } else {
+                    $product = Product::select('cost')
+                    ->where('db_product.id', '=', $invoice['product_id'])
+                    ->first();
+                    
+                    $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+                        ->where('db_productstore.product_id', '=', $invoice['product_id'])
+                        ->groupBy('product_id', 'variant_id')
+                        ->first();
+                    $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
+                        ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+                        ->whereNotIn('db_order.status', [0, 5, 6])
+                        ->where('db_orderdetail.product_id', '=', $invoice['product_id'])
+                        ->groupBy('product_id', 'variant_id')
+                        ->first();
+
+                    $cost = $product->cost;
+                    $qty_inventory = $productstore->sum_qty_store - $orderdetail->sum_qty_selled;
+
+                    $newCost = (($cost * $qty_inventory) + ($invoice['price_root'] * $request->qty)) / ($qty_inventory + $invoice['qty']);
+                    Product::where('id', $request->product_id)->update(['cost' => $newcost]);
+                }
+            }
+
             return response()->json(
                 [
                     'status' => true, 
                     'message' => 'Thành công', 
-                    'invoice' => $invoice
+                    'importInvoice' => $importInvoice
                 ],
                 201
             );    
@@ -197,8 +249,59 @@ class ImportInvoiceController extends Controller
             );
         }
     }
+
+    // public function store(Request $request)
+    // {
+    //     $invoiceData = $request->importInvoice;
+    
+    //     // Create a new ImportInvoice instance
+    //     $importInvoice = new ImportInvoice();
+    //     $order->name = $orderData['name']; 
+    //     $order->phone = $orderData['phone']; 
+    //     $order->email = $orderData['email']; 
+    //     $order->address = $orderData['address']; 
+    //     $importInvoice->note = $invoiceData['note'];
+    //     $importInvoice->created_at = now();
+    //     $importInvoice->created_by = $invoiceData['user_id'];
+    //     $importInvoice->save();
+    
+    //     if($invoice->save())//Luuu vao CSDL
+    //     {
+    //         foreach ($request->Listinvoices as $invoice) {
+    //             DB::table('import_invoice_details')->insert([
+    //                 'import_invoice_id' => $importInvoice->id,
+    //                 'variant_id' => $invoice['variant_id'],
+    //                 'qty' => $invoice['qty'],
+    //                 'price_root' => $invoice['price_root'],
+    //                 'created_at' => now(),
+    //             ]);
+    //         }
+
+    //         return response()->json(
+    //             [
+    //                 'status' => true, 
+    //                 'message' => 'Thành công', 
+    //                 'importInvoice' => $importInvoice
+    //             ],
+    //             201
+    //         );    
+    //     }
+    //     else
+    //     {
+    //         return response()->json(
+    //             [
+    //                 'status' => false, 
+    //                 'message' => 'Thêm không thành công', 
+    //                 'invoice' => null
+    //             ],
+    //             422
+    //         );
+    //     }
+    // }
     public function update(Request $request, $id)
     {
+        $invoiceData = $request->importInvoice;
+
         $invoice = ImportInvoice::find($id);
         if($invoice == null)//Luuu vao CSDL
         {
@@ -211,10 +314,13 @@ class ImportInvoiceController extends Controller
                 404
             );    
         }
-        $invoice->pty = $request->pty; //form
-        $invoice->price_root = $request->price_root; //form
+        $order->name = $orderData['name']; 
+        $order->phone = $orderData['phone']; 
+        $order->email = $orderData['email']; 
+        $order->address = $orderData['address']; 
+        $importInvoice->note = $invoiceData['note'];
         $invoice->updated_at = date('Y-m-d H:i:s');
-        $invoice->updated_by = 1;
+        $invoice->updated_by = $invoiceData['user_id'];
         $invoice->status = $request->status; //form
         if($invoice->save())//Luuu vao CSDL
         {

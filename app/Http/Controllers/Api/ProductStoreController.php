@@ -33,12 +33,12 @@ class ProductStoreController extends Controller
                 $join->on('db_productstore.product_id', '=', 'product.id');
             })
             ->select([
-                'db_productstore.id', 
+                'db_productstore.product_id', 
                 'db_productstore.variant_id', 
-                'product.price', 
+                // 'product.price', 
                 'db_productstore.price_root', 
-                'db_productstore.qty', 
-                'product.cost', 
+                // 'db_productstore.qty', 
+                // 'product.cost', 
                 'product.name', 
                 'product.image', 
                 // 'db_productstore.date_begin',
@@ -47,8 +47,23 @@ class ProductStoreController extends Controller
                 'product.brandname',
                 'product.category_id',
                 'product.brand_id',
+                DB::raw('SUM(qty) as sum_qty_store')
             ])
-            ->orderBy('db_productstore.created_at', 'DESC');
+            ->groupBy(
+                'db_productstore.product_id', 
+                'db_productstore.variant_id', 
+                // 'product.price', 
+                'db_productstore.price_root', 
+                // 'db_productstore.qty', 
+                // 'product.cost', 
+                'product.name', 
+                'product.image', 
+                'product.categoryname',
+                'product.brandname',
+                'product.category_id',
+                'product.brand_id'
+            );
+            // ->orderBy('db_productstore.created_at', 'DESC');
 
             if ($condition->input('brandId') != null) {
                 $query->where('product.brand_id', $condition->input('brandId'));
@@ -67,7 +82,7 @@ class ProductStoreController extends Controller
                         ->orWhere('product.brandname', 'like', '%' . $key . '%');
                 });
             }
-        $total = ProductStore::count();
+        $total = $query->count();
         $prostore = $query->paginate(5);
         $categories = Category::where('status', '=', '1')->select('id', 'name')->get();
         $brands = Brand::where('status', '=', '1')->select('id', 'name')->get();
@@ -85,11 +100,17 @@ class ProductStoreController extends Controller
         );
     }
 
-    public function show($id)
+    public function show($product_id, $variant_id = null)
     {
-        $prostore = ProductStore::find($id);
-        if($prostore == null)//Luuu vao CSDL
-        {
+        $query = ProductStore::where('product_id', '=', $product_id);
+    
+        if ($variant_id !== null) {
+            $query->where('variant_id', '=', $variant_id);
+        }
+    
+        $prostores = $query->get();
+    
+        if ($prostores->isEmpty()) {
             return response()->json(
                 [
                     'status' => false, 
@@ -97,20 +118,19 @@ class ProductStoreController extends Controller
                     'prostore' => null
                 ],
                 404
-            );    
-        }
-        else{
+            );
+        } else {
             return response()->json(
-                [   
+                [
                     'status' => true, 
                     'message' => 'Tải dữ liệu thành công', 
-                    'prostore' => $prostore
+                    'prostores' => $prostores
                 ],
                 200
-            );    
+            );
         }
     }
-
+    
     public function store(Request $request)
     {
         // // Kiểm tra quyền admin
@@ -118,36 +138,47 @@ class ProductStoreController extends Controller
         // if (!$user->isAdmin()) {
         //     return response()->json(['message' => 'Bạn không có quyền thực hiện hành động này'], 403);
         // }
-        $product = ProductStore::select('cost')
-        ->where('db_product.product_id', '=', $request->product_id)
-        ->first();
-
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
-        ->where('db_productstore.product_id', '=', $request->product_id)
-        ->groupBy('product_id')
-        ->first();
-
-        $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
-            ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
-            ->whereNotIn('db_order.status', [0, 5, 6])
-            ->where('db_orderdetail.product_id', '=', $request->product_id)
-            ->groupBy('product_id')
-            ->first();
-
-        $cost = $product->cost;
-        $qty_inventory = $productstore->sum_qty_store - $orderdetail->sum_qty_selled;
+        
 
         $prostore = new ProductStore();
         $prostore->product_id = $request->product_id;
+        $prostore->variant_id = $request->variant_id; //form
         $prostore->price_root = $request->price_root; //form
         $prostore->qty = $request->qty; //form
         $prostore->created_at = date('Y-m-d H:i:s');
         $prostore->created_by = 1;
         if($prostore->save())//Luuu vao CSDL
         {
-            $newCost = (($cost * $qty_inventory) + ($request->price_root * $request->qty)) / ($qty_inventory + $request->qty);
-            Product::where('id', $request->product_id)->update(['cost' => $newcost]);
-    
+            if ($request->variant_id) {
+                $product = ProductVariant::select('cost')
+                    ->where('db_product_variant.variant_id', '=', $request->variant_id)
+                    ->first();
+                $productstore->where('variant_id', $variantId)
+                    ->groupBy('product_id', 'variant_id')->first();
+                $orderdetail->where('variant_id', $variantId)
+                    ->groupBy('product_id', 'variant_id')->first();
+
+                $cost = $product->cost;
+                $qty_inventory = $productstore->sum_qty_store - $orderdetail->sum_qty_selled;
+            
+                $newCost = (($cost * $qty_inventory) + ($request->price_root * $request->qty)) / ($qty_inventory + $request->qty);
+                ProductVariant::where('id', $request->variant_id)->update(['cost' => $newcost]);
+        
+            } else {
+                $product = Product::select('cost')
+                ->where('db_product.id', '=', $request->product_id)
+                ->first();
+                $productstore->groupBy('product_id')->first();
+                $orderdetail->groupBy('product_id')->first();
+                
+                $cost = $product->cost;
+                $qty_inventory = $productstore->sum_qty_store - $orderdetail->sum_qty_selled;
+        
+                $newCost = (($cost * $qty_inventory) + ($request->price_root * $request->qty)) / ($qty_inventory + $request->qty);
+                Product::where('id', $request->product_id)->update(['cost' => $newcost]);
+
+            }
+        
             return response()->json(
                 [
                     'status' => true, 

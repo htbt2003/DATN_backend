@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\AttributeController;
 use App\Http\Controllers\Api\AttributeValueController;
 use App\Http\Controllers\Api\ProductVariantController;
 use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\ImportInvoiceController;
 
 //address
 Route::get('address_userId/{id?}', [AddressController::class, 'address_userId']);
@@ -225,7 +226,7 @@ Route::prefix('product')->group(function () {
 });
 Route::prefix('productstore')->group(function () {
     Route::get('index', [ProductStoreController::class, 'index']);
-    Route::get('show/{id}', [ProductStoreController::class, 'show']);
+    Route::get('show/{product_id}/{variant_id?}', [ProductStoreController::class, 'show']);
     Route::post('store', [ProductStoreController::class, 'store']);
     Route::post('update/{id}', [ProductStoreController::class, 'update']);
     Route::delete('destroy/{id}', [ProductStoreController::class, 'destroy']);
@@ -333,6 +334,20 @@ Route::prefix('attributeValue')->group(function () {
     Route::post('action_destroy', [AttributeValueController::class, 'action_destroy']);
 });
 
+Route::prefix('importInvoice')->group(function () {
+    Route::get('index', [ImportInvoiceController::class, 'index']);
+    Route::get('show/{id}', [ImportInvoiceController::class, 'show']);
+    Route::post('store', [ImportInvoiceController::class, 'store']);
+    Route::post('update/{id}', [ImportInvoiceController::class, 'update']);
+    Route::delete('destroy/{id}', [ImportInvoiceController::class, 'destroy']);
+    Route::get('change_status/{key}', [ImportInvoiceController::class, 'changeStatus']);
+    Route::get('delete/{key}', [ImportInvoiceController::class, 'delete']);
+    Route::get('restore/{key}', [ImportInvoiceController::class, 'restore']);
+    Route::get('trash', [ImportInvoiceController::class, 'trash']);
+    Route::post('action_trash', [ImportInvoiceController::class, 'action_trash']);
+    Route::post('action_destroy', [ImportInvoiceController::class, 'action_destroy']);
+
+});
 
 
 Route::group(['middleware'=>'api', 'prefix' => 'auth'],function(){
