@@ -10,7 +10,7 @@ class ImportInvoice extends Model
 {
     use HasFactory;
     protected $table = 'db_import_invoice';
-    protected $with = ['product_invoices'];
+    // protected $with = ['product_invoices'];
     public $timestamps = false;
     public function product_invoices()
     {

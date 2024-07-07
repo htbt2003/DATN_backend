@@ -226,9 +226,11 @@ Route::prefix('product')->group(function () {
 });
 Route::prefix('productstore')->group(function () {
     Route::get('index', [ProductStoreController::class, 'index']);
-    Route::get('show/{product_id}/{variant_id?}', [ProductStoreController::class, 'show']);
+    Route::get('show_history/{product_id}/{variant_id?}', [ProductStoreController::class, 'show_history']);
+    Route::get('show/{id}', [ProductSaleController::class, 'show']);
     Route::post('store', [ProductStoreController::class, 'store']);
     Route::post('update/{id}', [ProductStoreController::class, 'update']);
+    Route::get('delete/{key}', [ProductStoreController::class, 'delete']);
     Route::delete('destroy/{id}', [ProductStoreController::class, 'destroy']);
     Route::get('change_status/{key}', [ProductStoreController::class, 'changeStatus']);
     Route::post('action_trash', [ProductStoreController::class, 'action_trash']);

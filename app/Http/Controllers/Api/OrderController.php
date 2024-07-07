@@ -51,6 +51,7 @@ class OrderController extends Controller
         $order->save();
     
         foreach ($ListCart as $item) {
+            
             DB::table('db_orderdetail')->insert([
                 'order_id' => $order->id,
                 'product_id' => $item['product_id'],
@@ -269,7 +270,7 @@ class OrderController extends Controller
         $orders = array();
         $orderDetail=OrderDetail::where('db_orderdetail.order_id', $id)
             ->join('db_product as p', 'db_orderdetail.product_id', '=', 'p.id')
-            ->select('db_orderdetail.id', 'db_orderdetail.price as price_bill', 'db_orderdetail.qty', 'db_orderdetail.created_at', 'db_orderdetail.variant_id', 'p.name', 'p.image', 'p.price as price_product')
+            ->select('db_orderdetail.id', 'db_orderdetail.price as price_bill', 'db_orderdetail.qty', 'db_orderdetail.created_at', 'db_orderdetail.variant_id', 'p.name', 'p.image', 'p.price as price_sell')
             ->get();
         $order = Order::find($id);
         return response()->json(

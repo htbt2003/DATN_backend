@@ -21,7 +21,8 @@ class ProductController extends Controller
 {
     function product_new($limit)
     {
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+        $productstore = ProductStore::where('status', '=', 1)
+            ->select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
             ->groupBy('product_id');
 
         $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
@@ -82,7 +83,8 @@ class ProductController extends Controller
     }   
     function product_sale($limit)
     {
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+        $productstore = ProductStore::where('status', '=', 1)
+        ->select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
             ->groupBy('product_id');
 
         $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
@@ -143,7 +145,8 @@ class ProductController extends Controller
     }
     function product_bestSeller($limit)
     {
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+        $productstore = ProductStore::where('status', '=', 1)
+        ->select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
             ->groupBy('product_id');
 
         $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
@@ -228,7 +231,8 @@ class ProductController extends Controller
                 // }
             }
         }
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+        $productstore = ProductStore::where('status', '=', 1)
+        ->select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
         ->groupBy('product_id');
 
         $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
@@ -302,7 +306,8 @@ class ProductController extends Controller
 
     public function product_allAction(Request $condition)
     {
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+        $productstore = ProductStore::where('status', '=', 1)
+        ->select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
             ->groupBy('product_id');
 
         $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
@@ -416,7 +421,8 @@ class ProductController extends Controller
                 // }
             }
         }
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+        $productstore = ProductStore::where('status', '=', 1)
+        ->select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
             ->groupBy('product_id');
 
         $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
@@ -493,7 +499,8 @@ class ProductController extends Controller
 
     public function product_brand($brand_id, Request $condition)
     {
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+        $productstore = ProductStore::where('status', '=', 1)
+        ->select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
             ->groupBy('product_id');
 
         $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
@@ -586,7 +593,8 @@ class ProductController extends Controller
     // }
     public function product_detail($slug)
     {
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+        $productstore = ProductStore::where('status', '=', 1)
+        ->select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
         ->groupBy('product_id');
 
         $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
@@ -716,7 +724,8 @@ class ProductController extends Controller
     public function search(Request $request)
     {
         $search = $request->input('key');
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))->groupBy('product_id');
+        $productstore = ProductStore::where('status', '=', 1)
+        ->select('product_id', DB::raw('SUM(qty) as sum_qty_store'))->groupBy('product_id');
 
         $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
             ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
@@ -898,7 +907,8 @@ class ProductController extends Controller
     }
     public function trash(Request $condition)
     {
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+        $productstore = ProductStore::where('status', '=', 1)
+        ->select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
             ->groupBy('product_id');
         $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
                 ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
@@ -954,7 +964,8 @@ class ProductController extends Controller
     }
     public function index(Request $condition)
     {
-        $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+        $productstore = ProductStore::where('status', '=', 1)
+        ->select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
             ->groupBy('product_id');
         $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
                 ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
