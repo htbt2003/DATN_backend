@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\AttributeValueController;
 use App\Http\Controllers\Api\ProductVariantController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\ImportInvoiceController;
+use App\Http\Controllers\Api\PromotionController;
 
 //address
 Route::get('address_userId/{id?}', [AddressController::class, 'address_userId']);
@@ -348,6 +349,19 @@ Route::prefix('importInvoice')->group(function () {
     Route::get('trash', [ImportInvoiceController::class, 'trash']);
     Route::post('action_trash', [ImportInvoiceController::class, 'action_trash']);
     Route::post('action_destroy', [ImportInvoiceController::class, 'action_destroy']);
+});
+Route::prefix('promotion')->group(function () {
+    Route::get('index', [PromotionController::class, 'index']);
+    Route::get('show/{id}', [PromotionController::class, 'show']);
+    Route::post('store', [PromotionController::class, 'store']);
+    Route::post('update/{id}', [PromotionController::class, 'update']);
+    Route::delete('destroy/{id}', [PromotionController::class, 'destroy']);
+    Route::get('change_status/{key}', [PromotionController::class, 'changeStatus']);
+    Route::get('delete/{key}', [PromotionController::class, 'delete']);
+    Route::get('restore/{key}', [PromotionController::class, 'restore']);
+    Route::get('trash', [PromotionController::class, 'trash']);
+    Route::post('action_trash', [PromotionController::class, 'action_trash']);
+    Route::post('action_destroy', [PromotionController::class, 'action_destroy']);
 
 });
 

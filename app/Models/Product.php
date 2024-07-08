@@ -14,7 +14,7 @@ class Product extends Model
 {
     use HasFactory;
     protected $table = 'db_product';
-    protected $with = ['images', 'productattributes', 'variants'];
+    protected $with = ['images', 'productattributes', 'variants', 'sale'];
     public $timestamps = false;
     // public function category()
     // {
@@ -37,5 +37,14 @@ class Product extends Model
     {
         return $this->hasMany(ProductVariant::class);
     }
+    public function sale()
+    {
+        return $this->belongsTo(ProductSale::class)
+                ->where('date_begin', '<=', Carbon::now())
+                ->where('date_end', '>=', Carbon::now())
+                ->where('status', '=', 1)
+                ->select('id', 'price_sale');
+    }
+
 }
 

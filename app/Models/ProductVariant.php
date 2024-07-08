@@ -23,8 +23,8 @@ class ProductVariant extends Model
         return $this->belongsTo(ProductSale::class)
                 ->where('date_begin', '<=', Carbon::now())
                 ->where('date_end', '>=', Carbon::now())
-                ->where('qty', '>', 0)
-                ->select('price_sale');
+                ->where('status', '=', 1)
+                ->select('id', 'price_sale');
     }
 }
 

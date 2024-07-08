@@ -1,14 +1,14 @@
 Route::prefix('brand')->group(function () {
-    Route::get('index', [ImportInvoiceController::class, 'index']);
-    Route::get('show/{id}', [ImportInvoiceController::class, 'show']);
-    Route::post('store', [ImportInvoiceController::class, 'store']);
-    Route::post('update/{id}', [ImportInvoiceController::class, 'update']);
-    Route::delete('destroy/{id}', [ImportInvoiceController::class, 'destroy']);
-    Route::get('change_status/{key}', [ImportInvoiceController::class, 'changeStatus']);
-    Route::get('delete/{key}', [ImportInvoiceController::class, 'delete']);
-    Route::get('restore/{key}', [ImportInvoiceController::class, 'restore']);
-    Route::get('trash', [ImportInvoiceController::class, 'trash']);
-    Route::post('action_trash', [ImportInvoiceController::class, 'action_trash']);
-    Route::post('action_destroy', [ImportInvoiceController::class, 'action_destroy']);
+    Route::get('index', [PromotionController::class, 'index']);
+    Route::get('show/{id}', [PromotionController::class, 'show']);
+    Route::post('store', [PromotionController::class, 'store']);
+    Route::post('update/{id}', [PromotionController::class, 'update']);
+    Route::delete('destroy/{id}', [PromotionController::class, 'destroy']);
+    Route::get('change_status/{key}', [PromotionController::class, 'changeStatus']);
+    Route::get('delete/{key}', [PromotionController::class, 'delete']);
+    Route::get('restore/{key}', [PromotionController::class, 'restore']);
+    Route::get('trash', [PromotionController::class, 'trash']);
+    Route::post('action_trash', [PromotionController::class, 'action_trash']);
+    Route::post('action_destroy', [PromotionController::class, 'action_destroy']);
 
 });
