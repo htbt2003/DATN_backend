@@ -39,8 +39,8 @@ class CartController extends Controller
                     ->leftJoin('db_productsale', function ($join) {
                         $join->on('db_cart_item.product_id', '=', 'db_productsale.product_id')
                             ->where(function ($query) {
-                                $query->whereNull('db_cart_item.variant_id')
-                                    ->orWhereColumn('db_cart_item.variant_id', 'db_productsale.variant_id');
+                                $query->whereNotNull('db_cart_item.variant_id')
+                                    ->where('db_cart_item.variant_id', 'db_productsale.variant_id');
                             })
                             ->where('db_productsale.date_begin', '<=', Carbon::now())
                             ->where('db_productsale.date_end', '>=', Carbon::now())
@@ -77,8 +77,8 @@ class CartController extends Controller
         ->leftJoin('db_productsale', function ($join) {
             $join->on('p.id', '=', 'db_productsale.product_id')
                 ->where(function ($query) {
-                    $query->whereNull('db_cart_item.variant_id')
-                        ->orWhereColumn('db_cart_item.variant_id', 'db_productsale.variant_id');
+                    $query->whereNotNull('db_cart_item.variant_id')
+                        ->where('db_cart_item.variant_id', 'db_productsale.variant_id');
                 })
                 ->where('db_productsale.date_begin', '<=', Carbon::now())
                 ->where('db_productsale.date_end', '>=', Carbon::now())

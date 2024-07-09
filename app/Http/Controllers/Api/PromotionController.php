@@ -132,24 +132,26 @@ class PromotionController extends Controller
     }
     public function store(Request $request)
     {
-        $Listproduct = $request['Listproduct'];
+        $Listproducts = $request->Listproducts;
+
+        $inforPromotion = $request->promotion;
 
         $promotion = new Promotion();
-        $promotion->name = $request['name']; 
-        $promotion->date_begin = $request['date_begin'];
-        $promotion->date_end = $request['date_end'];
+        $promotion->name = $inforPromotion['name']; 
+        $promotion->date_begin = $inforPromotion['date_begin'];
+        $promotion->date_end = $inforPromotion['date_end'];
         $promotion->created_at = date('Y-m-d H:i:s');
-        $promotion->created_by = $request['user_id'];
+        $promotion->created_by = $inforPromotion['user_id'];
         if($promotion->save())//Luuu vao CSDL
         {
-            foreach ($ListCart as $item) {
+            foreach ($Listproducts as $item) {
             
-                DB::table('db_orderdetail')->insert([
+                DB::table('db_productsale')->insert([
                     'promotion_id' => $promotion->id,
                     'product_id' => $item['product_id'],
-                    'variant_id' => $item['variant_id'],
+                    'variant_id' => $item['variant_id'] ?? null,
                     'price_sale' => $item['price_sale'],
-                    'qty' => $item['qty'] ?? null,
+                    'qty' => $item['qty'],
                     'created_at' => now(),
                     'created_by' => $request['user_id'],
                 ]);

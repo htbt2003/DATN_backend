@@ -63,6 +63,7 @@ Route::get('product_sale/{limit}', [ProductController::class, 'product_sale']);
 Route::get('product_bestSeller/{limit}', [ProductController::class, 'product_bestSeller']);
 Route::get('product_home/{limit}/{category_id?}', [ProductController::class, 'product_home']);
 Route::get('product_stores', [ProductController::class, 'product_stores']);
+Route::get('product_stores_toSale', [ProductController::class, 'product_stores_toSale']);
 Route::get('product_allAction', [ProductController::class, 'product_allAction']);
 Route::get('product_category/{category_id}', [ProductController::class, 'product_category']);
 Route::get('product_brand/{brand_id}', [ProductController::class, 'product_brand']);

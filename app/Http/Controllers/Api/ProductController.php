@@ -30,14 +30,25 @@ class ProductController extends Controller
             ->whereNotIn('db_order.status', [5, 6, 7])
             ->groupBy('product_id');
 
-        $productsale = ProductSale::select('db_productsale.product_id', DB::raw('MIN(price_sale) as price_sale'), 'orderdetail.sum_qty_selled as sum_qty_sale_selled', DB::raw('SUM(db_productsale.qty) as sum_qty_sale'))
-            ->where('date_begin', '<=', Carbon::now())
-            ->where('date_end', '>=', Carbon::now())
-            ->where('qty', '>', 0)
-            ->leftJoinSub($orderdetail, 'orderdetail', function ($join) {
-                $join->on('db_productsale.product_id', '=', 'orderdetail.product_id');
-            })
-            ->groupBy('db_productsale.product_id');
+            $productsale = ProductSale::select(
+                'db_productsale.product_id',
+                DB::raw('SUM(db_productsale.qty) as sum_qty_sale'),
+                DB::raw('MIN(db_productsale.price_sale) as price_sale'),
+                DB::raw('(SELECT SUM(od.qty) 
+                    FROM db_orderdetail od 
+                    INNER JOIN db_order o ON od.order_id = o.id 
+                    WHERE o.status NOT IN (5, 6, 7) 
+                    AND od.product_id = db_productsale.product_id 
+                    AND od.created_at >= db_promotion.date_begin 
+                    AND od.created_at <= db_promotion.date_end
+                    GROUP BY od.product_id) as sum_qty_sale_selled')
+            )
+            ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
+            ->where('db_promotion.date_begin', '<=', Carbon::now())
+            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
+            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+
 
         $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
             ->groupBy('product_id'); 
@@ -92,14 +103,25 @@ class ProductController extends Controller
             ->whereNotIn('db_order.status', [5, 6, 7])
             ->groupBy('product_id'); 
 
-        $productsale = ProductSale::select('db_productsale.product_id', DB::raw('MIN(price_sale) as price_sale'), DB::raw('SUM(qty) as sum_qty_sale_selled'), DB::raw('SUM(db_productsale.qty) as sum_qty_sale'))
-            ->where('date_begin', '<=', Carbon::now())
-            ->where('date_end', '>=', Carbon::now())
-            ->where('qty', '>', 0)
-            ->leftJoinSub($orderdetail, 'orderdetail', function ($join) {
-                $join->on('db_productsale.product_id', '=', 'orderdetail.product_id');
-            })
-            ->groupBy('db_productsale.product_id');
+            $productsale = ProductSale::select(
+                'db_productsale.product_id',
+                DB::raw('SUM(db_productsale.qty) as sum_qty_sale'),
+                DB::raw('MIN(db_productsale.price_sale) as price_sale'),
+                DB::raw('(SELECT SUM(od.qty) 
+                    FROM db_orderdetail od 
+                    INNER JOIN db_order o ON od.order_id = o.id 
+                    WHERE o.status NOT IN (5, 6, 7) 
+                    AND od.product_id = db_productsale.product_id 
+                    AND od.created_at >= db_promotion.date_begin 
+                    AND od.created_at <= db_promotion.date_end
+                    GROUP BY od.product_id) as sum_qty_sale_selled')
+            )
+            ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
+            ->where('db_promotion.date_begin', '<=', Carbon::now())
+            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
+            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+
 
         $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
             ->groupBy('product_id'); 
@@ -154,14 +176,25 @@ class ProductController extends Controller
             ->whereNotIn('db_order.status', [5, 6, 7])
             ->groupBy('product_id');
 
-       $productsale = ProductSale::select('db_productsale.product_id', DB::raw('MIN(price_sale) as price_sale'), 'orderdetail.sum_qty_selled as sum_qty_sale_selled', DB::raw('SUM(db_productsale.qty) as sum_qty_sale'))
-            ->where('date_begin', '<=', Carbon::now())
-            ->where('date_end', '>=', Carbon::now())
-            ->where('qty', '>', 0)
-            ->leftJoinSub($orderdetail, 'orderdetail', function ($join) {
-                $join->on('db_productsale.product_id', '=', 'orderdetail.product_id');
-            })
-            ->groupBy('db_productsale.product_id');
+            $productsale = ProductSale::select(
+                'db_productsale.product_id',
+                DB::raw('SUM(db_productsale.qty) as sum_qty_sale'),
+                DB::raw('MIN(db_productsale.price_sale) as price_sale'),
+                DB::raw('(SELECT SUM(od.qty) 
+                    FROM db_orderdetail od 
+                    INNER JOIN db_order o ON od.order_id = o.id 
+                    WHERE o.status NOT IN (5, 6, 7) 
+                    AND od.product_id = db_productsale.product_id 
+                    AND od.created_at >= db_promotion.date_begin 
+                    AND od.created_at <= db_promotion.date_end
+                    GROUP BY od.product_id) as sum_qty_sale_selled')
+            )
+            ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
+            ->where('db_promotion.date_begin', '<=', Carbon::now())
+            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
+            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+
 
         $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
             ->groupBy('product_id'); 
@@ -194,7 +227,6 @@ class ProductController extends Controller
                 'orderdetail.sum_qty_selled as sum_qty_selled',
                 'review.avg_rating',
             )            
-            ->groupBy('db_product.id')
             ->limit($limit)
             ->get();
         return response()->json(
@@ -243,14 +275,25 @@ class ProductController extends Controller
         $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
                 ->groupBy('product_id'); 
     
-       $productsale = ProductSale::select('db_productsale.product_id', DB::raw('MIN(price_sale) as price_sale'), 'orderdetail.sum_qty_selled as sum_qty_sale_selled', DB::raw('SUM(db_productsale.qty) as sum_qty_sale'))
-                ->where('date_begin', '<=', Carbon::now())
-                ->where('date_end', '>=', Carbon::now())
-                ->where('qty', '>', 0)
-                ->leftJoinSub($orderdetail, 'orderdetail', function ($join) {
-                    $join->on('db_productsale.product_id', '=', 'orderdetail.product_id');
-                })
-                ->groupBy('db_productsale.product_id');
+        $productsale = ProductSale::select(
+                'db_productsale.product_id',
+                DB::raw('SUM(db_productsale.qty) as sum_qty_sale'),
+                DB::raw('MIN(db_productsale.price_sale) as price_sale'),
+                DB::raw('(SELECT SUM(od.qty) 
+                    FROM db_orderdetail od 
+                    INNER JOIN db_order o ON od.order_id = o.id 
+                    WHERE o.status NOT IN (5, 6, 7) 
+                    AND od.product_id = db_productsale.product_id 
+                    AND od.created_at >= db_promotion.date_begin 
+                    AND od.created_at <= db_promotion.date_end
+                    GROUP BY od.product_id) as sum_qty_sale_selled')
+            )
+            ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
+            ->where('db_promotion.date_begin', '<=', Carbon::now())
+            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
+            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+
 
         $products = Product::where('db_product.status', '=', 1)
             ->joinSub($productstore, 'productstore', function($join){
@@ -279,7 +322,6 @@ class ProductController extends Controller
                 'orderdetail.sum_qty_selled',
                 'review.avg_rating',
             )
-            ->groupBy('db_product.id')
             ->limit($limit)
             ->get();
         if(count($products)>0){
@@ -315,14 +357,25 @@ class ProductController extends Controller
                 ->whereNotIn('db_order.status', [5, 6, 7])
                 ->groupBy('product_id'); 
 
-       $productsale = ProductSale::select('db_productsale.product_id', DB::raw('MIN(price_sale) as price_sale'), 'orderdetail.sum_qty_selled as sum_qty_sale_selled', DB::raw('SUM(db_productsale.qty) as sum_qty_sale'))
-                ->where('date_begin', '<=', Carbon::now())
-                ->where('date_end', '>=', Carbon::now())
-                ->where('qty', '>', 0)
-                ->leftJoinSub($orderdetail, 'orderdetail', function ($join) {
-                    $join->on('db_productsale.product_id', '=', 'orderdetail.product_id');
-                })
-                ->groupBy('db_productsale.product_id');
+        $productsale = ProductSale::select(
+                'db_productsale.product_id',
+                DB::raw('SUM(db_productsale.qty) as sum_qty_sale'),
+                DB::raw('MIN(db_productsale.price_sale) as price_sale'),
+                DB::raw('(SELECT SUM(od.qty) 
+                    FROM db_orderdetail od 
+                    INNER JOIN db_order o ON od.order_id = o.id 
+                    WHERE o.status NOT IN (5, 6, 7) 
+                    AND od.product_id = db_productsale.product_id 
+                    AND od.created_at >= db_promotion.date_begin 
+                    AND od.created_at <= db_promotion.date_end
+                    GROUP BY od.product_id) as sum_qty_sale_selled')
+            )
+            ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
+            ->where('db_promotion.date_begin', '<=', Carbon::now())
+            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
+            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+        
 
         $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
                 ->groupBy('product_id'); 
@@ -352,8 +405,8 @@ class ProductController extends Controller
                     'productstore.sum_qty_store',
                     'orderdetail.sum_qty_selled',
                     'review.avg_rating',
-                )            
-            ->groupBy('db_product.id');
+            );            
+            // ->groupBy('db_product.id');
 
         if ($condition->input('brands') != null) {
             $query->whereIn('brand_id', $condition->input('brands'));
@@ -430,14 +483,26 @@ class ProductController extends Controller
             ->whereNotIn('db_order.status', [5, 6, 7])
             ->groupBy('product_id'); 
 
-       $productsale = ProductSale::select('db_productsale.product_id', DB::raw('MIN(price_sale) as price_sale'), 'orderdetail.sum_qty_selled as sum_qty_sale_selled', DB::raw('SUM(db_productsale.qty) as sum_qty_sale'))
-            ->where('date_begin', '<=', Carbon::now())
-            ->where('date_end', '>=', Carbon::now())
-            ->where('qty', '>', 0)
-            ->leftJoinSub($orderdetail, 'orderdetail', function ($join) {
-                $join->on('db_productsale.product_id', '=', 'orderdetail.product_id');
-            })
-            ->groupBy('db_productsale.product_id');
+        $productsale = ProductSale::select(
+                'db_productsale.product_id',
+                DB::raw('SUM(db_productsale.qty) as sum_qty_sale'),
+                DB::raw('MIN(db_productsale.price_sale) as price_sale'),
+                DB::raw('(SELECT SUM(od.qty) 
+                    FROM db_orderdetail od 
+                    INNER JOIN db_order o ON od.order_id = o.id 
+                    WHERE o.status NOT IN (5, 6, 7) 
+                    AND od.product_id = db_productsale.product_id 
+                    AND od.created_at >= db_promotion.date_begin 
+                    AND od.created_at <= db_promotion.date_end
+                    GROUP BY od.product_id) as sum_qty_sale_selled')
+            )
+            ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
+            ->where('db_promotion.date_begin', '<=', Carbon::now())
+            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
+            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+
+
 
         $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
             ->groupBy('product_id'); 
@@ -468,8 +533,8 @@ class ProductController extends Controller
                 'productstore.sum_qty_store',
                 'orderdetail.sum_qty_selled',
                 'review.avg_rating',
-            )
-            ->groupBy('db_product.id');
+            );
+            // ->groupBy('db_product.id');
             
         if ($condition->has('prices')) {
             $query->whereBetween('price', [
@@ -508,14 +573,26 @@ class ProductController extends Controller
             ->whereNotIn('db_order.status', [5, 6, 7])
             ->groupBy('product_id'); 
 
-       $productsale = ProductSale::select('db_productsale.product_id', DB::raw('MIN(price_sale) as price_sale'), 'orderdetail.sum_qty_selled as sum_qty_sale_selled', DB::raw('SUM(db_productsale.qty) as sum_qty_sale'))
-            ->where('date_begin', '<=', Carbon::now())
-            ->where('date_end', '>=', Carbon::now())
-            ->where('qty', '>', 0)
-            ->leftJoinSub($orderdetail, 'orderdetail', function ($join) {
-                $join->on('db_productsale.product_id', '=', 'orderdetail.product_id');
-            })
-            ->groupBy('db_productsale.product_id');
+        $productsale = ProductSale::select(
+                'db_productsale.product_id',
+                DB::raw('SUM(db_productsale.qty) as sum_qty_sale'),
+                DB::raw('MIN(db_productsale.price_sale) as price_sale'),
+                DB::raw('(SELECT SUM(od.qty) 
+                    FROM db_orderdetail od 
+                    INNER JOIN db_order o ON od.order_id = o.id 
+                    WHERE o.status NOT IN (5, 6, 7) 
+                    AND od.product_id = db_productsale.product_id 
+                    AND od.created_at >= db_promotion.date_begin 
+                    AND od.created_at <= db_promotion.date_end
+                    GROUP BY od.product_id) as sum_qty_sale_selled')
+            )
+            ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
+            ->where('db_promotion.date_begin', '<=', Carbon::now())
+            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
+            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+
+
             
         $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
             ->groupBy('product_id'); 
@@ -545,8 +622,8 @@ class ProductController extends Controller
                 'productstore.sum_qty_store',
                 'orderdetail.sum_qty_selled',
                 'review.avg_rating',
-            )
-            ->groupBy('db_product.id'); 
+            );
+            // ->groupBy('db_product.id'); 
 
         if ($condition->has('prices')) {
             $query->whereBetween('price', [
@@ -602,14 +679,25 @@ class ProductController extends Controller
             ->whereNotIn('db_order.status', [5, 6, 7])
             ->groupBy('product_id'); 
 
-       $productsale = ProductSale::select('db_productsale.product_id', DB::raw('MIN(price_sale) as price_sale'), 'orderdetail.sum_qty_selled as sum_qty_sale_selled', DB::raw('SUM(db_productsale.qty) as sum_qty_sale'))
-            ->where('date_begin', '<=', Carbon::now())
-            ->where('date_end', '>=', Carbon::now())
-            ->where('qty', '>', 0)
-            ->leftJoinSub($orderdetail, 'orderdetail', function ($join) {
-                $join->on('db_productsale.product_id', '=', 'orderdetail.product_id');
-            })
-            ->groupBy('db_productsale.product_id');
+        $productsale = ProductSale::select(
+                'db_productsale.product_id',
+                DB::raw('SUM(db_productsale.qty) as sum_qty_sale'),
+                DB::raw('MIN(db_productsale.price_sale) as price_sale'),
+                DB::raw('(SELECT SUM(od.qty) 
+                    FROM db_orderdetail od 
+                    INNER JOIN db_order o ON od.order_id = o.id 
+                    WHERE o.status NOT IN (5, 6, 7) 
+                    AND od.product_id = db_productsale.product_id 
+                    AND od.created_at >= db_promotion.date_begin 
+                    AND od.created_at <= db_promotion.date_end
+                    GROUP BY od.product_id) as sum_qty_sale_selled')
+            )
+            ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
+            ->where('db_promotion.date_begin', '<=', Carbon::now())
+            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
+            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+
 
         $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
             ->groupBy('product_id'); 
@@ -646,7 +734,7 @@ class ProductController extends Controller
                 'orderdetail.sum_qty_selled',
                 'review.avg_rating',
             )
-            ->groupBy('db_product.id')
+            // ->groupBy('db_product.id')
             ->first();
         if($product == null){
             return response()->json(
@@ -707,7 +795,7 @@ class ProductController extends Controller
                 'orderdetail.sum_qty_selled',
                 'review.avg_rating',
             )
-            ->groupBy('db_product.id')
+            // ->groupBy('db_product.id')
             ->orderBy("db_product.created_at", 'DESC')
             ->limit(8)
             ->get();
@@ -732,7 +820,7 @@ class ProductController extends Controller
             ->whereNotIn('db_order.status', [5, 6, 7])
             ->groupBy('product_id'); 
 
-            $productsale = ProductSale::select(
+        $productsale = ProductSale::select(
                 'db_productsale.product_id',
                 DB::raw('SUM(db_productsale.qty) as sum_qty_sale'),
                 DB::raw('MIN(db_productsale.price_sale) as price_sale'),
@@ -748,11 +836,8 @@ class ProductController extends Controller
             ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
             ->where('db_promotion.date_begin', '<=', Carbon::now())
             ->where('db_promotion.date_end', '>=', Carbon::now())
-            ->where(function ($query) {
-                $query->whereNull('sum_qty_sale_selled')
-                    ->orWhere('sum_qty_sale-sum_qty_sale_selled > 0');
-            })
-            ->groupBy('db_productsale.product_id');
+            ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
+            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
 
         $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
             ->groupBy('product_id'); 
@@ -789,7 +874,7 @@ class ProductController extends Controller
                 'orderdetail.sum_qty_selled',
                 'review.avg_rating',
             )
-            ->groupBy('db_product.id')
+            // ->groupBy('db_product.id')
             ->orderBy('db_product.created_at', "DESC")
             ->get();
         
@@ -825,11 +910,25 @@ class ProductController extends Controller
             ->whereNotIn('db_order.status', [5, 6, 7])
             ->groupBy('product_id'); 
 
-       $productsale = ProductSale::select('db_productsale.product_id', DB::raw('MIN(price_sale) as price_sale'), DB::raw('SUM(db_productsale.qty) as sum_qty_sale'))
-            ->where('date_begin', '<=', Carbon::now())
-            ->where('date_end', '>=', Carbon::now())
-            ->where('qty', '>', 0)
-            ->groupBy('db_productsale.product_id');
+            $productsale = ProductSale::select(
+                'db_productsale.product_id',
+                DB::raw('SUM(db_productsale.qty) as sum_qty_sale'),
+                DB::raw('MIN(db_productsale.price_sale) as price_sale'),
+                DB::raw('(SELECT SUM(od.qty) 
+                    FROM db_orderdetail od 
+                    INNER JOIN db_order o ON od.order_id = o.id 
+                    WHERE o.status NOT IN (5, 6, 7) 
+                    AND od.product_id = db_productsale.product_id 
+                    AND od.created_at >= db_promotion.date_begin 
+                    AND od.created_at <= db_promotion.date_end
+                    GROUP BY od.product_id) as sum_qty_sale_selled')
+            )
+            ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
+            ->where('db_promotion.date_begin', '<=', Carbon::now())
+            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
+            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+
 
         $query = Product::where('db_product.status','=', 1)
             ->joinSub($productstore, 'productstore', function($join){
@@ -903,12 +1002,12 @@ class ProductController extends Controller
             ->whereNotIn('db_order.status', [5, 6, 7])
             ->groupBy('product_id'); 
 
-       $productsale = ProductSale::select('db_productsale.product_id', DB::raw('MIN(price_sale) as price_sale'), DB::raw('SUM(db_productsale.qty) as sum_qty_sale'))
-            ->leftJoin('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
-            ->where('db_promotion.date_begin', '<=', Carbon::now())
-            ->where('db_promotion.date_end', '>=', Carbon::now())
-            // ->where('qty', '>', 0)
+        $productsale = ProductSale::select('db_productsale.product_id')
+            ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
+            ->whereDate('db_promotion.date_begin', '<=', $condition['date_begin'])
+            ->whereDate('db_promotion.date_end', '>=', $condition['date_begin'])
             ->groupBy('db_productsale.product_id');
+
 
         $query = Product::where('db_product.status','=', 1)
             ->joinSub($productstore, 'productstore', function($join){
@@ -916,8 +1015,9 @@ class ProductController extends Controller
             })
             ->leftJoin('db_category', 'db_product.category_id', '=', 'db_category.id')
             ->leftJoin('db_brand', 'db_product.brand_id', '=', 'db_brand.id')
-            ->leftJoinSub($productsale, 'productsale', function ($join) {
-                $join->on('db_product.id', '=', 'productsale.product_id');
+            ->whereNotIn('db_product.id', function($query) use ($productsale) {
+                $query->select('product_id')
+                      ->fromSub($productsale, 'productsale');
             })
             ->leftJoinSub($orderdetail, 'orderdetail', function($join){
                 $join->on('db_product.id', '=', 'orderdetail.product_id');
@@ -928,7 +1028,7 @@ class ProductController extends Controller
                 'db_product.image',
                 'db_product.price',
                 'db_product.slug',
-                'productsale.price_sale',
+                // 'productsale.price_sale',
                 // 'productsale.sum_qty_sale_selled',
                 'productstore.sum_qty_store',
                 'orderdetail.sum_qty_selled',
@@ -936,6 +1036,10 @@ class ProductController extends Controller
                 'db_brand.name as brandname',
             )
             ->orderBy('db_product.created_at', 'DESC');
+
+        if ($condition->input('productIdSelected') != null) {
+            $query->whereNotIn('db_product.id', $condition->input('productIdSelected'));
+        }
 
         if ($condition->input('brandId') != null) {
             $query->where('brand_id', $condition->input('brandId'));
