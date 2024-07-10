@@ -164,7 +164,7 @@ class ProductSaleController extends Controller
             );
         }
     }
-    public function delete($id)
+    public function delete($product_id, $promotion_id)
     {
         $prosale = ProductSale::find($id);
         if($prosale == null)//Luuu vao CSDL
@@ -223,41 +223,24 @@ class ProductSaleController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function destroy($product_id, $promotion_id)
     {
-        $prosale = ProductSale::findOrFail($id);
-        if($prosale == null)//Luuu vao CSDL
-        {
-            return response()->json(
-                [
-                    'status' => false, 
-                    'message' => 'Không tìm thấy dữ liệu', 
-                    'prosale' => null
-                ],
-               404 
-            );    
+        $deleted = ProductSale::where('product_id', $product_id)
+                              ->where('promotion_id', $promotion_id)
+                              ->delete();
+    
+        if ($deleted === 0) {
+            return response()->json([
+                'status' => false, 
+                'message' => 'Không tìm thấy dữ liệu để xóa', 
+                'prosale' => null
+            ], 404);    
         }
-        if($prosale->delete())
-        {
-            return response()->json(
-                [
-                    'status' => true,
-                    'message' => 'Xóa thành công',
-                    'prosale' => $prosale
-                ],
-                200
-            );    
-        }
-        else
-        {
-            return response()->json(
-                [
-                    'status' => false,
-                    'message' => 'Xóa không thành công',
-                    'prosale' => null
-                ],
-                422
-            );    
-        }
+    
+        return response()->json([
+            'status' => true,
+            'message' => 'Xóa thành công',
+            'count' => $deleted
+        ], 200);
     }
 }

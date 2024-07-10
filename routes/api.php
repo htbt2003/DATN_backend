@@ -244,7 +244,7 @@ Route::prefix('productsale')->group(function () {
     Route::get('show/{id}', [ProductSaleController::class, 'show']);
     Route::post('store', [ProductSaleController::class, 'store']);
     Route::post('update/{id}', [ProductSaleController::class, 'update']);
-    Route::delete('destroy/{id}', [ProductSaleController::class, 'destroy']);
+    Route::delete('destroy/{product_id}/{promotion_id}', [ProductSaleController::class, 'destroy']);
     Route::get('change_status/{key}', [ProductSaleController::class, 'changeStatus']);
     Route::post('action_trash', [ProductSaleController::class, 'action_trash']);
     Route::post('action_destroy', [ProductSaleController::class, 'action_destroy']);

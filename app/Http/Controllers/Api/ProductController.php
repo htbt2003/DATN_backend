@@ -19,8 +19,19 @@ use Carbon\Carbon;
 
 class ProductController extends Controller
 {
+    private $currentDateUtc;
+    private $currentDate;
+
+    public function __construct()
+    {
+        // Initialize current date and time in UTC
+        $this->currentDateUtc = Carbon::now();
+        // Convert to local time zone
+        $this->currentDate = $this->currentDateUtc->setTimezone('Asia/Ho_Chi_Minh');
+    }     
     function product_new($limit)
     {
+
         $productstore = ProductStore::where('status', '=', 1)
             ->select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
             ->groupBy('product_id');
@@ -42,10 +53,10 @@ class ProductController extends Controller
                     AND od.created_at >= db_promotion.date_begin 
                     AND od.created_at <= db_promotion.date_end
                     GROUP BY od.product_id) as sum_qty_sale_selled')
-            )
+                )
             ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
-            ->where('db_promotion.date_begin', '<=', Carbon::now())
-            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->where('db_promotion.date_begin', '<=', $this->currentDate)
+            ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
             ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
 
@@ -82,12 +93,12 @@ class ProductController extends Controller
             )
             ->limit($limit)
             ->get();
-
+            $products->load(['images', 'productattributes']);
         return response()->json(
             [
                 'status' => true,
                 'message' => 'Tải dữ liệu thành công',
-                'products' => $products
+                'products' => $products,
             ],
             200
         );
@@ -117,8 +128,8 @@ class ProductController extends Controller
                     GROUP BY od.product_id) as sum_qty_sale_selled')
             )
             ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
-            ->where('db_promotion.date_begin', '<=', Carbon::now())
-            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->where('db_promotion.date_begin', '<=', $this->currentDate)
+            ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
             ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
 
@@ -190,8 +201,8 @@ class ProductController extends Controller
                     GROUP BY od.product_id) as sum_qty_sale_selled')
             )
             ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
-            ->where('db_promotion.date_begin', '<=', Carbon::now())
-            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->where('db_promotion.date_begin', '<=', $this->currentDate)
+            ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
             ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
 
@@ -289,8 +300,8 @@ class ProductController extends Controller
                     GROUP BY od.product_id) as sum_qty_sale_selled')
             )
             ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
-            ->where('db_promotion.date_begin', '<=', Carbon::now())
-            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->where('db_promotion.date_begin', '<=', $this->currentDate)
+            ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
             ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
 
@@ -371,8 +382,8 @@ class ProductController extends Controller
                     GROUP BY od.product_id) as sum_qty_sale_selled')
             )
             ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
-            ->where('db_promotion.date_begin', '<=', Carbon::now())
-            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->where('db_promotion.date_begin', '<=', $this->currentDate)
+            ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
             ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
         
@@ -401,6 +412,7 @@ class ProductController extends Controller
                     'db_product.slug',
                     'db_product.created_at',
                     'productsale.price_sale',
+                    'productsale.sum_qty_sale',
                     'productsale.sum_qty_sale_selled',
                     'productstore.sum_qty_store',
                     'orderdetail.sum_qty_selled',
@@ -497,8 +509,8 @@ class ProductController extends Controller
                     GROUP BY od.product_id) as sum_qty_sale_selled')
             )
             ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
-            ->where('db_promotion.date_begin', '<=', Carbon::now())
-            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->where('db_promotion.date_begin', '<=', $this->currentDate)
+            ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
             ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
 
@@ -587,8 +599,8 @@ class ProductController extends Controller
                     GROUP BY od.product_id) as sum_qty_sale_selled')
             )
             ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
-            ->where('db_promotion.date_begin', '<=', Carbon::now())
-            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->where('db_promotion.date_begin', '<=', $this->currentDate)
+            ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
             ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
 
@@ -693,8 +705,8 @@ class ProductController extends Controller
                     GROUP BY od.product_id) as sum_qty_sale_selled')
             )
             ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
-            ->where('db_promotion.date_begin', '<=', Carbon::now())
-            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->where('db_promotion.date_begin', '<=', $this->currentDate)
+            ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
             ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
 
@@ -834,8 +846,8 @@ class ProductController extends Controller
                     GROUP BY od.product_id) as sum_qty_sale_selled')
             )
             ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
-            ->where('db_promotion.date_begin', '<=', Carbon::now())
-            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->where('db_promotion.date_begin', '<=', $this->currentDate)
+            ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
             ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
 
@@ -924,8 +936,8 @@ class ProductController extends Controller
                     GROUP BY od.product_id) as sum_qty_sale_selled')
             )
             ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
-            ->where('db_promotion.date_begin', '<=', Carbon::now())
-            ->where('db_promotion.date_end', '>=', Carbon::now())
+            ->where('db_promotion.date_begin', '<=', $this->currentDate)
+            ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
             ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
 
