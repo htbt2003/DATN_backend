@@ -41,7 +41,7 @@ class ProductController extends Controller
             ->whereNotIn('db_order.status', [5, 6, 7])
             ->groupBy('product_id');
 
-            $productsale = ProductSale::select(
+        $productsale = ProductSale::select(
                 'db_productsale.product_id',
                 DB::raw('SUM(db_productsale.qty) as sum_qty_sale'),
                 DB::raw('MIN(db_productsale.price_sale) as price_sale'),
@@ -58,7 +58,10 @@ class ProductController extends Controller
             ->where('db_promotion.date_begin', '<=', $this->currentDate)
             ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
-            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+            ->havingRaw('CASE 
+                    WHEN sum_qty_sale IS NULL THEN TRUE 
+                    ELSE sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0 
+                 END');
 
 
         $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
@@ -131,7 +134,10 @@ class ProductController extends Controller
             ->where('db_promotion.date_begin', '<=', $this->currentDate)
             ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
-            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+            ->havingRaw('CASE 
+                    WHEN sum_qty_sale IS NULL THEN TRUE 
+                    ELSE sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0 
+                 END');
 
 
         $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
@@ -204,7 +210,10 @@ class ProductController extends Controller
             ->where('db_promotion.date_begin', '<=', $this->currentDate)
             ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
-            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+            ->havingRaw('CASE 
+                    WHEN sum_qty_sale IS NULL THEN TRUE 
+                    ELSE sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0 
+                 END');
 
 
         $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
@@ -303,7 +312,10 @@ class ProductController extends Controller
             ->where('db_promotion.date_begin', '<=', $this->currentDate)
             ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
-            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+            ->havingRaw('CASE 
+                    WHEN sum_qty_sale IS NULL THEN TRUE 
+                    ELSE sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0 
+                 END');
 
 
         $products = Product::where('db_product.status', '=', 1)
@@ -385,7 +397,10 @@ class ProductController extends Controller
             ->where('db_promotion.date_begin', '<=', $this->currentDate)
             ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
-            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+            ->havingRaw('CASE 
+                    WHEN sum_qty_sale IS NULL THEN TRUE 
+                    ELSE sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0 
+                 END');
         
 
         $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
@@ -512,7 +527,10 @@ class ProductController extends Controller
             ->where('db_promotion.date_begin', '<=', $this->currentDate)
             ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
-            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+            ->havingRaw('CASE 
+                    WHEN sum_qty_sale IS NULL THEN TRUE 
+                    ELSE sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0 
+                 END');
 
 
 
@@ -602,7 +620,10 @@ class ProductController extends Controller
             ->where('db_promotion.date_begin', '<=', $this->currentDate)
             ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
-            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+            ->havingRaw('CASE 
+                    WHEN sum_qty_sale IS NULL THEN TRUE 
+                    ELSE sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0 
+                 END');
 
 
             
@@ -708,7 +729,10 @@ class ProductController extends Controller
             ->where('db_promotion.date_begin', '<=', $this->currentDate)
             ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
-            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+            ->havingRaw('CASE 
+                    WHEN sum_qty_sale IS NULL THEN TRUE 
+                    ELSE sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0 
+                 END');
 
 
         $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
@@ -849,7 +873,10 @@ class ProductController extends Controller
             ->where('db_promotion.date_begin', '<=', $this->currentDate)
             ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
-            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+            ->havingRaw('CASE 
+                    WHEN sum_qty_sale IS NULL THEN TRUE 
+                    ELSE sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0 
+                 END');
 
         $review = Review::select('product_id', DB::raw('AVG(rating) as avg_rating'))
             ->groupBy('product_id'); 
@@ -939,7 +966,10 @@ class ProductController extends Controller
             ->where('db_promotion.date_begin', '<=', $this->currentDate)
             ->where('db_promotion.date_end', '>=', $this->currentDate)
             ->groupBy('db_productsale.product_id', 'sum_qty_sale_selled')
-            ->havingRaw('sum_qty_sale IS NOT NULL AND sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0');
+            ->havingRaw('CASE 
+                    WHEN sum_qty_sale IS NULL THEN TRUE 
+                    ELSE sum_qty_sale - COALESCE(sum_qty_sale_selled, 0) > 0 
+                 END');
 
 
         $query = Product::where('db_product.status','=', 1)

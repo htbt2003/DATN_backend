@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Models\ProductSale;
 
 class CartController extends Controller
 {
@@ -34,32 +35,52 @@ class CartController extends Controller
         }
 
         // Lấy danh sách các mục trong giỏ hàng
-        $ListCart = CartItem::where('cart_id', '=', $cart->id)
-                    ->join('db_product as p', 'db_cart_item.product_id', '=', 'p.id')
-                    ->leftJoin('db_productsale', function ($join) {
-                        $join->on('db_cart_item.product_id', '=', 'db_productsale.product_id')
-                            ->where(function ($query) {
-                                $query->whereNotNull('db_cart_item.variant_id')
-                                    ->where('db_cart_item.variant_id', 'db_productsale.variant_id');
-                            })
-                            ->where('db_productsale.date_begin', '<=', Carbon::now())
-                            ->where('db_productsale.date_end', '>=', Carbon::now())
-                            ->where('qty', '>', 0);
-                    })
-                    ->select([
-                        'db_cart_item.id', 
-                        'db_cart_item.variant_id', 
-                        'db_cart_item.status', 
-                        'p.price', 
-                        'db_productsale.price_sale', 
-                        'db_cart_item.quantity', 
-                        'p.cost', 
-                        'p.name', 
-                        'p.image', 
-                        'db_cart_item.product_id'
-                    ])
-                    ->get();
-
+        $productsale = ProductSale::select(
+            'db_productsale.product_id',
+            'db_productsale.variant_id',
+            'db_productsale.qty',
+            'db_productsale.price_sale',
+            DB::raw('(SELECT SUM(od.qty) 
+                FROM db_orderdetail od 
+                INNER JOIN db_order o ON od.order_id = o.id 
+                WHERE o.status NOT IN (5, 6, 7) 
+                AND od.product_id = db_productsale.product_id
+                AND (od.variant_id = db_productsale.variant_id OR od.variant_id IS NULL)
+                AND od.created_at >= db_promotion.date_begin 
+                AND od.created_at <= db_promotion.date_end
+                GROUP BY od.product_id, od.variant_id) as sum_qty_sale_selled')
+        )
+        ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
+        ->where('db_promotion.date_begin', '<=', Carbon::now('Asia/Ho_Chi_Minh'))
+        ->where('db_promotion.date_end', '>=', Carbon::now('Asia/Ho_Chi_Minh'))
+        ->havingRaw('CASE 
+                        WHEN qty IS NULL THEN TRUE 
+                        ELSE qty - COALESCE(sum_qty_sale_selled, 0) > 0 
+                    END');
+    
+    $ListCart = CartItem::where('cart_id', '=', $cart->id)
+        ->join('db_product as p', 'db_cart_item.product_id', '=', 'p.id')
+        ->leftJoinSub($productsale, 'productsale', function ($join) {
+            $join->on('db_cart_item.product_id', '=', 'productsale.product_id')
+                 ->where(function ($query) {
+                     $query->whereColumn('db_cart_item.variant_id', 'productsale.variant_id')
+                           ->orWhereNull('db_cart_item.variant_id');
+                 });
+        })
+        ->select(
+            'db_cart_item.id',
+            'db_cart_item.variant_id',
+            'db_cart_item.product_id',
+            'p.price',
+            'productsale.price_sale',
+            'db_cart_item.quantity',
+            'p.cost',
+            'p.name',
+            'p.image',
+            'db_cart_item.status'
+        )
+        ->get();
+    
         return response()->json(
             [
                 'status' => true,
@@ -72,19 +93,57 @@ class CartController extends Controller
     public function list_selected($deviceId)
     {   
         $cart = Cart::where('deviceId', '=', $deviceId)->first();
+
+        $productsale = ProductSale::select(
+            'db_productsale.product_id',
+            'db_productsale.variant_id',
+            'db_productsale.qty',
+            'db_productsale.price_sale',
+            DB::raw('(SELECT SUM(od.qty) 
+                FROM db_orderdetail od 
+                INNER JOIN db_order o ON od.order_id = o.id 
+                WHERE o.status NOT IN (5, 6, 7) 
+                AND od.product_id = db_productsale.product_id
+                ANd od.variant_id = db_productsale.variant_id 
+                AND od.created_at >= db_promotion.date_begin 
+                AND od.created_at <= db_promotion.date_end
+                GROUP BY od.product_id, od.variant_id) as sum_qty_sale_selled')
+            )
+        ->join('db_promotion', 'db_productsale.promotion_id', '=', 'db_promotion.id')
+        ->where('db_promotion.date_begin', '<=', Carbon::now('Asia/Ho_Chi_Minh'))
+        ->where('db_promotion.date_end', '>=', Carbon::now('Asia/Ho_Chi_Minh'))
+        ->havingRaw('CASE 
+                        WHEN qty IS NULL THEN TRUE 
+                        ELSE qty - COALESCE(sum_qty_sale_selled, 0) > 0 
+                    END');
+ 
         $ListCart = CartItem::where([['db_cart_item.status','=', 1],['db_cart_item.cart_id','=', $cart->id]])
         ->join('db_product as p', 'db_cart_item.product_id', '=', 'p.id')
-        ->leftJoin('db_productsale', function ($join) {
-            $join->on('p.id', '=', 'db_productsale.product_id')
-                ->where(function ($query) {
-                    $query->whereNotNull('db_cart_item.variant_id')
-                        ->where('db_cart_item.variant_id', 'db_productsale.variant_id');
-                })
-                ->where('db_productsale.date_begin', '<=', Carbon::now())
-                ->where('db_productsale.date_end', '>=', Carbon::now())
-                ->where('qty', '>', 0);
+        ->leftJoinSub($productsale, 'productsale', function ($join) {
+            $join->on('db_cart_item.product_id', '=', 'productsale.product_id')
+                 ->where(function ($query) {
+                     $query->whereColumn('db_cart_item.variant_id', 'productsale.variant_id')
+                           ->orWhereNull('db_cart_item.variant_id');
+                 });
         })
-        ->select('db_cart_item.id', 'db_cart_item.variant_id', 'db_cart_item.product_id', 'p.price', 'db_productsale.price_sale','db_cart_item.quantity', 'p.cost', 'p.name', 'p.image', 'db_cart_item.status',)
+        // ->leftJoinSub($productsale, 'productsale', function ($join) {
+        //     $join->on('p.id', '=', 'productsale.product_id')
+        //         ->where(function ($query) {
+        //             $query->whereNotNull('db_cart_item.variant_id')
+        //                 ->where('db_cart_item.variant_id', 'productsale.variant_id');
+        //         });
+        // })
+        ->select(
+                'db_cart_item.id',
+                'db_cart_item.variant_id',
+                'db_cart_item.product_id',
+                'p.price',
+                'productsale.price_sale',
+                'db_cart_item.quantity',
+                'p.cost', 'p.name',
+                'p.image',
+                'db_cart_item.status',
+            )
         ->get();
 
 
