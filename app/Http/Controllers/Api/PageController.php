@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Post;
 use Illuminate\Support\Str;
 use App\Models\Topic;
+use Carbon\Carbon;
 
 class PageController extends Controller
 {
@@ -148,7 +149,7 @@ class PageController extends Controller
                 404
             );    
         }
-        $page->updated_at = date('Y-m-d H:i:s');
+        $page->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $page->updated_by = 1;
         $page->status = ($page->status == 1) ? 2 : 1; //form
         if($page->save())//Luuu vao CSDL
@@ -291,7 +292,7 @@ class PageController extends Controller
         $page->type = $request->type; //form
         $page->metakey = $request->metakey; //form
         $page->metadesc = $request->metadesc; //form
-        $page->created_at = date('Y-m-d H:i:s');
+        $page->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $page->created_by = 1;
         $page->status = $request->status; //form
         $page->save(); //Luuu vao CSDL
@@ -350,7 +351,7 @@ class PageController extends Controller
         $page->type = $request->type; //form
         $page->metakey = $request->metakey; //form
         $page->metadesc = $request->metadesc; //form
-        $page->updated_at = date('Y-m-d H:i:s');
+        $page->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $page->updated_by = 1;
         $page->status = $request->status; //form
         if($page->save())//Luuu vao CSDL
@@ -390,7 +391,7 @@ class PageController extends Controller
                 404
             );    
         }
-        $page->updated_at = date('Y-m-d H:i:s');
+        $page->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $page->updated_by = 1;
         $page->status = 0; 
         if($page->save())//Luuu vao CSDL
@@ -419,7 +420,7 @@ class PageController extends Controller
                 404
             );    
         }
-        $page->updated_at = date('Y-m-d H:i:s');
+        $page->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $page->updated_by = 1;
         $page->status = 2; 
         if($page->save())//Luuu vao CSDL

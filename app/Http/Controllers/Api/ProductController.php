@@ -456,6 +456,7 @@ class ProductController extends Controller
         else{
             $query->orderBy('db_product.created_at', 'DESC');
         }
+        $priceMax = Product::max('price');
         $total = $query->count();
         $products = $query->paginate(8);
         $categories = Category::where('status', '=', '1')
@@ -472,6 +473,7 @@ class ProductController extends Controller
                 'total' => $total,
                 'categories' => $categories,
                 'brands' => $brands,
+                'priceMax' => $priceMax,
             ],
             200
         );
@@ -578,6 +580,7 @@ class ProductController extends Controller
         else{
             $query->orderBy('created_at', 'DESC');
         }
+        $priceMax = Product::max('price');
         $products = $query->paginate(8);
         $total = $products->total();
         return response()->json(
@@ -586,6 +589,7 @@ class ProductController extends Controller
                 'message' => 'Tải dữ liệu thành công',
                 'products' => $products,
                 'total' => $total,
+                'priceMax' => $priceMax,
             ],
             200
         );
@@ -670,6 +674,7 @@ class ProductController extends Controller
         else{
             $query->orderBy('created_at', 'DESC');
         }
+        $priceMax = Product::max('price');
         $products = $query->paginate(8);
         $total = $products->total();
         return response()->json(
@@ -678,6 +683,7 @@ class ProductController extends Controller
                 'message' => 'Tải dữ liệu thành công',
                 'products' => $products,
                 'total' => $total,
+                'priceMax' => $priceMax,
             ],
             200
         );
@@ -1308,7 +1314,7 @@ class ProductController extends Controller
                 404
             );    
         }
-        $product->updated_at = date('Y-m-d H:i:s');
+        $product->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $product->updated_by = 1;
         $product->status = ($product->status == 1) ? 2 : 1; //form
         if($product->save())//Luuu vao CSDL
@@ -1354,7 +1360,7 @@ class ProductController extends Controller
         $product->detail = $request->detail; // form
         $product->metakey = $request->metakey; // form
         $product->metadesc = $request->metadesc; // form
-        $product->created_at = date('Y-m-d H:i:s');
+        $product->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $product->created_by = 1;
         $product->status = $request->status; // form
     
@@ -1461,7 +1467,7 @@ class ProductController extends Controller
         $product->detail = $request->detail; //form
         $product->metakey = $request->metakey; //form
         $product->metadesc = $request->metadesc; //form
-        $product->updated_at = date('Y-m-d H:i:s');
+        $product->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $product->updated_by = 1;
         $product->status = $request->status; //form
         if($product->save())//Luuu vao CSDL
@@ -1501,7 +1507,7 @@ class ProductController extends Controller
                 404
             );    
         }
-        $product->updated_at = date('Y-m-d H:i:s');
+        $product->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $product->updated_by = 1;
         $product->status = 0; 
         if($product->save())//Luuu vao CSDL
@@ -1530,7 +1536,7 @@ class ProductController extends Controller
                 404
             );    
         }
-        $product->updated_at = date('Y-m-d H:i:s');
+        $product->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $product->updated_by = 1;
         $product->status = 2; 
         if($product->save())//Luuu vao CSDL

@@ -10,6 +10,7 @@ use App\Models\Category;
 use App\Models\Brand;
 use App\Models\OrderDetail;
 use App\Models\ProductVariant;
+use Carbon\Carbon;
 
 use Illuminate\Support\Facades\DB;
 
@@ -179,7 +180,7 @@ class ProductStoreController extends Controller
     //     $prostore->variant_id = $request->variant_id; //form
     //     $prostore->price_root = $request->price_root; //form
     //     $prostore->qty = $request->qty; //form
-    //     $prostore->created_at = date('Y-m-d H:i:s');
+    //     $prostore->created_at = Carbon::now('Asia/Ho_Chi_Minh');
     //     $prostore->created_by = 1;
     //     if($prostore->save())//Luuu vao CSDL
     //     {
@@ -261,7 +262,7 @@ class ProductStoreController extends Controller
         //Cập nhật
         $prostore->qty = $request->qty; //form
         $prostore->price_root = $request->price_root; //form
-        $prostore->updated_at = date('Y-m-d H:i:s');
+        $prostore->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $prostore->updated_by = $request->user_id;
 
         if($prostore->save())//Luuu vao CSDL
@@ -367,7 +368,7 @@ class ProductStoreController extends Controller
         $qty_old = $prostore->qty;
         
         //delete
-        $prostore->updated_at = date('Y-m-d H:i:s');
+        $prostore->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $prostore->updated_by = 1;
         $prostore->status = 0; 
         if($prostore->save())//Luuu vao CSDL

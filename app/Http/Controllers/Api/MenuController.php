@@ -8,6 +8,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\Topic;
+use Carbon\Carbon;
 
 class MenuController extends Controller
 {
@@ -91,7 +92,7 @@ class MenuController extends Controller
                 404
             );    
         }
-        $menu->updated_at = date('Y-m-d H:i:s');
+        $menu->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $menu->updated_by = 1;
         $menu->status = ($menu->status == 1) ? 2 : 1; //form
         if($menu->save())//Luuu vao CSDL
@@ -220,7 +221,7 @@ class MenuController extends Controller
                     $menu->link = '/danh-muc-san-pham/'.$category->slug; 
                     $menu->parent_id = 0;
                     $menu->type = $request->type;
-                    $menu->created_at = date('Y-m-d H:i:s');
+                    $menu->created_at = Carbon::now('Asia/Ho_Chi_Minh');
                     $menu->created_by = 1;
                     $menu->status = 2;
                     $menu->position = $request->position;    
@@ -237,7 +238,7 @@ class MenuController extends Controller
                     $menu->link = '/thuong-hieu/'.$menu->slug; 
                     $menu->parent_id = 0;
                     $menu->type = $request->type;
-                    $menu->created_at = date('Y-m-d H:i:s');
+                    $menu->created_at = Carbon::now('Asia/Ho_Chi_Minh');
                     $menu->created_by = 1;
                     $menu->status = 2;
                     $menu->position = $request->position;    
@@ -254,7 +255,7 @@ class MenuController extends Controller
                         $menu->link = '/chu-de-bai-viet/'.$topic->slug; 
                         $menu->parent_id = 0;
                         $menu->type = $request->type;
-                        $menu->created_at = date('Y-m-d H:i:s');
+                        $menu->created_at = Carbon::now('Asia/Ho_Chi_Minh');
                         $menu->created_by = 1;
                         $menu->status = 2;
                         $menu->position = $request->position;    
@@ -271,7 +272,7 @@ class MenuController extends Controller
                         $menu->link = '/trang-don/'.$page->slug; 
                         $menu->parent_id = 0;
                         $menu->type = $request->type;
-                        $menu->created_at = date('Y-m-d H:i:s');
+                        $menu->created_at = Carbon::now('Asia/Ho_Chi_Minh');
                         $menu->created_by = 1;
                         $menu->status = 2;
                         $menu->position = $request->position;    
@@ -318,7 +319,7 @@ class MenuController extends Controller
                     $menu->link = 'danh-muc-san-pham/'.$category->slug; 
                     $menu->parent_id = 0;
                     $menu->type = $type;
-                    $menu->created_at = date('Y-m-d H:i:s');
+                    $menu->created_at = Carbon::now('Asia/Ho_Chi_Minh');
                     $menu->created_by = 1;
                     $menu->status = 2;
                     $menu->position = $position;    
@@ -335,7 +336,7 @@ class MenuController extends Controller
                     $menu->link = 'thuong-hieu/'.$menu->slug; 
                     $menu->parent_id = 0;
                     $menu->type = $type;
-                    $menu->created_at = date('Y-m-d H:i:s');
+                    $menu->created_at = Carbon::now('Asia/Ho_Chi_Minh');
                     $menu->created_by = 1;
                     $menu->status = 2;
                     $menu->position = $position;    
@@ -352,7 +353,7 @@ class MenuController extends Controller
                         $menu->link = 'chu-de-bai-viet/'.$topic->slug; 
                         $menu->parent_id = 0;
                         $menu->type = $type;
-                        $menu->created_at = date('Y-m-d H:i:s');
+                        $menu->created_at = Carbon::now('Asia/Ho_Chi_Minh');
                         $menu->created_by = 1;
                         $menu->status = 2;
                         $menu->position = $position;    
@@ -369,7 +370,7 @@ class MenuController extends Controller
                         $menu->link = 'trang-don/'.$page->slug; 
                         $menu->parent_id = 0;
                         $menu->type = $type;
-                        $menu->created_at = date('Y-m-d H:i:s');
+                        $menu->created_at = Carbon::now('Asia/Ho_Chi_Minh');
                         $menu->created_by = 1;
                         $menu->status = 2;
                         $menu->position = $position;    
@@ -422,7 +423,7 @@ class MenuController extends Controller
         $menu->link = $request->link; //form
         $menu->parent_id = $request->parent_id; //form
         //$menu->type = $request->type; //form
-        $menu->updated_at = date('Y-m-d H:i:s');
+        $menu->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $menu->updated_by = 1;
         $menu->status = $request->status; //form
         $menu->position = $request->position; //form
@@ -463,7 +464,7 @@ class MenuController extends Controller
                 404
             );    
         }
-        $menu->updated_at = date('Y-m-d H:i:s');
+        $menu->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $menu->updated_by = 1;
         $menu->status = 0; 
         if($menu->save())//Luuu vao CSDL
@@ -492,7 +493,7 @@ class MenuController extends Controller
                 404
             );    
         }
-        $menu->updated_at = date('Y-m-d H:i:s');
+        $menu->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $menu->updated_by = 1;
         $menu->status = 2; 
         if($menu->save())//Luuu vao CSDL

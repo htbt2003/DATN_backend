@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Banner;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 
 class BannerController extends Controller
@@ -132,7 +133,7 @@ class BannerController extends Controller
                 404
             );    
         }
-        $banner->updated_at = date('Y-m-d H:i:s');
+        $banner->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $banner->updated_by = 1;
         $banner->status = ($banner->status == 1) ? 2 : 1; //form
         if($banner->save())//Luuu vao CSDL
@@ -185,7 +186,7 @@ class BannerController extends Controller
                 $files->move(public_path('images/banner'), $filename);
             }
         }
-        $banner->created_at = date('Y-m-d H:i:s');
+        $banner->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $banner->created_by = 1;
         $banner->status = $request->status; //form
         if($banner->save())//Luuu vao CSDL
@@ -240,7 +241,7 @@ class BannerController extends Controller
                 $files->move(public_path('images/banner'), $filename);
             }
         }
-        $banner->updated_at = date('Y-m-d H:i:s');
+        $banner->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $banner->updated_by = 1;
         $banner->status = $request->status; //form
         if($banner->save())//Luuu vao CSDL
@@ -280,7 +281,7 @@ class BannerController extends Controller
                 404
             );    
         }
-        $banner->updated_at = date('Y-m-d H:i:s');
+        $banner->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $banner->updated_by = 1;
         $banner->status = 0; 
         if($banner->save())//Luuu vao CSDL
@@ -309,7 +310,7 @@ class BannerController extends Controller
                 404
             );    
         }
-        $banner->updated_at = date('Y-m-d H:i:s');
+        $banner->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $banner->updated_by = 1;
         $banner->status = 2; 
         if($banner->save())//Luuu vao CSDL

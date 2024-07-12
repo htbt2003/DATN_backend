@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ProductSale;
 use App\Models\Product;
+use Carbon\Carbon;
 
 class ProductSaleController extends Controller
 {
@@ -94,7 +95,7 @@ class ProductSaleController extends Controller
         $prosale->qty = $request->qty; 
         $prosale->date_begin = $request->date_begin;
         $prosale->date_end = $request->date_end;
-        $prosale->created_at = date('Y-m-d H:i:s');
+        $prosale->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $prosale->created_by = 1;
         if($prosale->save())//Luuu vao CSDL
         {
@@ -138,7 +139,7 @@ class ProductSaleController extends Controller
         $prosale->qty = $request->qty; 
         $prosale->date_begin = $request->date_begin;
         $prosale->date_end = $request->date_end;
-        $prosale->updated_at = date('Y-m-d H:i:s');
+        $prosale->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $prosale->updated_by = 1;
         $prosale->status = $request->status; //form
         if($prosale->save())//Luuu vao CSDL
@@ -178,7 +179,7 @@ class ProductSaleController extends Controller
                 404
             );    
         }
-        $prosale->updated_at = date('Y-m-d H:i:s');
+        $prosale->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $prosale->updated_by = 1;
         $prosale->status = 0; 
         if($prosale->save())//Luuu vao CSDL
@@ -207,7 +208,7 @@ class ProductSaleController extends Controller
                 404
             );    
         }
-        $prosale->updated_at = date('Y-m-d H:i:s');
+        $prosale->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $prosale->updated_by = 1;
         $prosale->status = 2; 
         if($prosale->save())//Luuu vao CSDL

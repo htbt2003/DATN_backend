@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Review;
+use Carbon\Carbon;
 
 class ReviewController extends Controller
 {
@@ -67,7 +68,7 @@ class ReviewController extends Controller
         $review->product_id = $request->product_id; //form
         $review->rating = $request->rating; //form
         $review->comment = $request->comment; //form
-        $review->created_at = date('Y-m-d H:i:s');
+        $review->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $review->created_by = 1;
         $review->save(); //Luuu vao CSDL
         return response()->json(

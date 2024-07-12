@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\OrderDetail;
+use Carbon\Carbon;
 
 
 class OrderDetailController extends Controller
@@ -23,7 +24,7 @@ class OrderDetailController extends Controller
                 404
             );    
         }
-        $orderdetail->updated_at = date('Y-m-d H:i:s');
+        $orderdetail->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $orderdetail->updated_by = 1;
         $orderdetail->status = ($orderdetail->status == 1) ? 2 : 1; //form
         if($orderdetail->save())//Luuu vao CSDL
@@ -78,7 +79,7 @@ class OrderDetailController extends Controller
         $orderDetail->orderdetail_id = $request->orderdetail_id; //form
         $orderDetail->price = $request->price; //form
         $orderDetail->qty = $request->qty; //form
-        $orderDetail->created_at = date('Y-m-d H:i:s');
+        $orderDetail->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $orderDetail->save(); //Luuu vao CSDL
         return response()->json(
             [
@@ -96,7 +97,7 @@ class OrderDetailController extends Controller
         $orderDetail->orderdetail_id = $request->orderdetail_id; //form
         $orderDetail->price = $request->price; //form
         $orderDetail->qty = $request->qty; //form
-        $orderDetail->updated_at = date('Y-m-d H:i:s');
+        $orderDetail->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $orderDetail->save(); //Luuu vao CSDL
         return response()->json(
             [

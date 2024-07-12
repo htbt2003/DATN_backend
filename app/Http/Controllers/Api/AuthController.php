@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 
 class AuthController extends Controller
 {
@@ -122,7 +123,7 @@ class AuthController extends Controller
                 $files1->move(public_path('images/user'), $filename);
             }
         }
-        $user->created_at = date('Y-m-d H:i:s');
+        $user->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $user->created_by = 1;
         $user->status = $request->status; //form
         $user->save();

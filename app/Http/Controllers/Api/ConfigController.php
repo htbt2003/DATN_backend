@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Config;
+use Carbon\Carbon;
 
 class ConfigController extends Controller
 {
@@ -39,7 +40,7 @@ class ConfigController extends Controller
         $config->youtube = $request->youtube; //form
         $config->metadesc = $request->metadesc; //form
         $config->metakey = $request->metakey; //form
-        $config->updated_at = date('Y-m-d H:i:s');
+        $config->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $config->updated_by = 1;
         $config->status = $request->status; //form
         if($config->save())//Luuu vao CSDL

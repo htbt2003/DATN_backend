@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Image;
+use Carbon\Carbon;
 
 
 class ImageController extends Controller
@@ -59,7 +60,7 @@ class ImageController extends Controller
         $image->sort_order = $request->sort_order; //form
         $image->metakey = $request->metakey; //form
         $image->metadesc = $request->metadesc; //form
-        $image->created_at = date('Y-m-d H:i:s');
+        $image->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $image->created_by = 1;
         $image->status = $request->status; //form
         if($image->save())//Luuu vao CSDL
@@ -115,7 +116,7 @@ class ImageController extends Controller
         $image->sort_order = $request->sort_order; //form
         $image->metakey = $request->metakey; //form
         $image->metadesc = $request->metadesc; //form
-        $image->updated_at = date('Y-m-d H:i:s');
+        $image->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $image->updated_by = 1;
         $image->status = $request->status; //form
         if($image->save())//Luuu vao CSDL

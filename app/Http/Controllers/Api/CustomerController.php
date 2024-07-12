@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Models\User;
+use Carbon\Carbon;
 
 class CustomerController extends Controller
 {
@@ -23,7 +24,7 @@ class CustomerController extends Controller
                 404
             );    
         }
-        $customer->updated_at = date('Y-m-d H:i:s');
+        $customer->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $customer->updated_by = 1;
         $customer->status = ($customer->status == 1) ? 2 : 1; //form
         if($customer->save())//Luuu vao CSDL
@@ -158,7 +159,7 @@ class CustomerController extends Controller
         }
         //
         $user->roles = $request->roles; //form
-        $user->created_at = date('Y-m-d H:i:s');
+        $user->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $user->created_by = 1;
         $user->status = $request->status; //form
         if($user->save())//Luuu vao CSDL
@@ -215,7 +216,7 @@ class CustomerController extends Controller
         }
         //
         $user->roles = $request->roles; //form
-        $user->updated_at = date('Y-m-d H:i:s');
+        $user->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $user->updated_by = 1;
         $user->status = $request->status; //form
         if($user->save())//Luuu vao CSDL
@@ -255,7 +256,7 @@ class CustomerController extends Controller
                 404
             );    
         }
-        $user->updated_at = date('Y-m-d H:i:s');
+        $user->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $user->updated_by = 1;
         $user->status = 0; 
         if($user->save())//Luuu vao CSDL
@@ -284,7 +285,7 @@ class CustomerController extends Controller
                 404
             );    
         }
-        $user->updated_at = date('Y-m-d H:i:s');
+        $user->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $user->updated_by = 1;
         $user->status = 2; 
         if($user->save())//Luuu vao CSDL

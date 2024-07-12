@@ -5,9 +5,172 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Address;
+use Carbon\Carbon;
 
 class AddressController extends Controller
 {
+    public function default_address_userId($id)
+    {
+        $address = Address::where([['user_id','=', $id], ['status','=', 1]])->first();
+        if (!$address) {
+            return response()->json(['message' => 'Address not found'], 404);
+        }
+
+        if($address)//Luuu vao CSDL
+        {
+            return response()->json(
+                [
+                    'status' => true, 
+                    'message' => 'Thêm thành công', 
+                    'address' => $address
+                ],
+                201
+            );    
+        }
+        else
+        {
+            return response()->json(
+                [
+                    'status' => false, 
+                    'message' => 'Thêm không thành công', 
+                    'address' => null
+                ],
+                422
+            );
+        }
+
+    }
+
+    public function address_userId($id)
+    {
+        $addresses = Address::where('user_id','=', $id)->get();
+        if (!$addresses) {
+            return response()->json(['message' => 'Address not found'], 404);
+        }
+
+        if($addresses)//Luuu vao CSDL
+        {
+            return response()->json(
+                [
+                    'status' => true, 
+                    'message' => 'Thêm thành công', 
+                    'addresses' => $addresses
+                ],
+                201
+            );    
+        }
+        else
+        {
+            return response()->json(
+                [
+                    'status' => false, 
+                    'message' => 'Thêm không thành công', 
+                    'addresses' => null
+                ],
+                422
+            );
+        }
+
+    }
+
+    public function updateDefaultAddress($id)
+    {
+        $address = Address::find($id);
+        if (!$address) {
+            return response()->json(['message' => 'Address not found'], 404);
+        }
+
+        // Cập nhật địa chỉ mặc định
+        Address::where('status', 1)->update(['status' => 0]);
+        $address->status = 1;
+        $address->save();
+
+        return response()->json(['message' => 'Default address updated successfully']);
+    }
+    public function store(Request $request)
+    {
+        $address = new address();
+        $address->name = $request->name; //form
+        $address->phone = $request->phone; //form
+        $address->address = $request->address; //form
+        $address->created_at = Carbon::now('Asia/Ho_Chi_Minh');
+        $address->user_id = $request->user_id;
+        $address->status = $request->status;
+         // Check if no default address exists
+        if ($request->status==1) {
+            Address::where('status', 1)->update(['status' => 0]);
+        }
+        if($address->save())//Luuu vao CSDL
+        {
+            return response()->json(
+                [
+                    'status' => true, 
+                    'message' => 'Thêm thành công', 
+                    'address' => $address
+                ],
+                201
+            );    
+        }
+        else
+        {
+            return response()->json(
+                [
+                    'status' => false, 
+                    'message' => 'Thêm không thành công', 
+                    'address' => null
+                ],
+                422
+            );
+        }
+    }
+    public function update(Request $request, $id)
+    {
+        $address = Address::find($id);
+        if($address == null)
+        {
+            return response()->json(
+                [
+                    'status' => false, 
+                    'message' => 'Không tìm thấy dữ liệu', 
+                    'address' => null
+                ],
+                404
+            );    
+        }
+        $address->name = $request->name; //form
+        $address->phone = $request->phone; //form
+        $address->address = $request->address; //form
+        $address->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
+        $address->user_id = $request->user_id;
+        $address->status = $request->status;
+         // Check if no default address exists
+        if ($request->status == 1) {
+            Address::where('status', 1)->update(['status' => 0]);
+        }
+        if($address->save())//Luuu vao CSDL
+        {
+            return response()->json(
+                [
+                    'status' => true, 
+                    'message' => 'Cập nhật thành công', 
+                    'address' => $address
+                ],
+                201
+            );    
+        }
+        else
+        {
+            return response()->json(
+                [
+                    'status' => false, 
+                    'message' => 'Thêm không thành công', 
+                    'address' => null
+                ],
+                422
+            );
+        }
+    }
+
     public function action_trash(Request $request)
     {
         $listId = $request->input('listId');
@@ -76,7 +239,7 @@ class AddressController extends Controller
                 404
             );    
         }
-        $address->updated_at = date('Y-m-d H:i:s');
+        $address->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $address->updated_by = 1;
         $address->status = ($address->status == 1) ? 2 : 1; //form
         if($address->save())//Luuu vao CSDL
@@ -111,105 +274,50 @@ class AddressController extends Controller
             200
         );
     }
-    public function store(Request $request)
-    {
-        $address = new address();
-        $address->name = $request->name; //form
-        $address->description = $request->description; //form
-        // $address->link = $request->link; //form
-        $address->position = $request->position; //form
-        $slug = Str::of($request->name)->slug('-');
-        //upload image
-        $files = $request->image;
-        if ($files != null) {
-            $extension = $files->getClientOriginalExtension();
-            if (in_array($extension, ['jpg', 'png', 'gif', 'webp', 'jpeg'])) {
-                $filename = date('YmdHis') . '.' . $extension;
-                $address->image = $filename;
-                $files->move(public_path('images/address'), $filename);
-            }
-        }
-        $address->created_at = date('Y-m-d H:i:s');
-        $address->created_by = 1;
-        $address->status = $request->status; //form
-        if($address->save())//Luuu vao CSDL
-        {
-            return response()->json(
-                [
-                    'status' => true, 
-                    'message' => 'Thêm thành công', 
-                    'address' => $address
-                ],
-                201
-            );    
-        }
-        else
-        {
-            return response()->json(
-                [
-                    'status' => false, 
-                    'message' => 'Thêm không thành công', 
-                    'address' => null
-                ],
-                422
-            );
-        }
-    }
-    public function update(Request $request, $id)
-    {
-        $address = Address::find($id);
-        if($address == null)
-        {
-            return response()->json(
-                [
-                    'status' => false, 
-                    'message' => 'Không tìm thấy dữ liệu', 
-                    'address' => null
-                ],
-                404
-            );    
-        }
-        $address->name = $request->name; //form
-        $address->description = $request->description; //form
-        // $address->link = $request->link; //form
-        $address->position = $request->position; //form
-        $slug = Str::of($request->name)->slug('-');
-        //upload image
-        $files = $request->image;
-        if ($files != null) {
-            $extension = $files->getClientOriginalExtension();
-            if (in_array($extension, ['jpg', 'png', 'gif', 'webp', 'jpeg'])) {
-                $filename = date('YmdHis') . '.' . $extension;
-                $address->image = $filename;
-                $files->move(public_path('images/address'), $filename);
-            }
-        }
-        $address->updated_at = date('Y-m-d H:i:s');
-        $address->updated_by = 1;
-        $address->status = $request->status; //form
-        if($address->save())//Luuu vao CSDL
-        {
-            return response()->json(
-                [
-                    'status' => true, 
-                    'message' => 'Cập nhật dữ liệu thành công', 
-                    'address' => $address
-                ],
-                201
-            );    
-        }
-        else
-        {
-            return response()->json(
-                [
-                    'status' => false, 
-                    'message' => 'Cập nhật dữ liệu không thành công', 
-                    'address' => null
-                ],
-                422
-            );
-        }
-    }
+    // public function store(Request $request)
+    // {
+    //     $address = new address();
+    //     $address->name = $request->name; //form
+    //     $address->description = $request->description; //form
+    //     // $address->link = $request->link; //form
+    //     $address->position = $request->position; //form
+    //     $slug = Str::of($request->name)->slug('-');
+    //     //upload image
+    //     $files = $request->image;
+    //     if ($files != null) {
+    //         $extension = $files->getClientOriginalExtension();
+    //         if (in_array($extension, ['jpg', 'png', 'gif', 'webp', 'jpeg'])) {
+    //             $filename = date('YmdHis') . '.' . $extension;
+    //             $address->image = $filename;
+    //             $files->move(public_path('images/address'), $filename);
+    //         }
+    //     }
+    //     $address->created_at = Carbon::now('Asia/Ho_Chi_Minh');
+    //     $address->created_by = 1;
+    //     $address->status = $request->status; //form
+    //     if($address->save())//Luuu vao CSDL
+    //     {
+    //         return response()->json(
+    //             [
+    //                 'status' => true, 
+    //                 'message' => 'Thêm thành công', 
+    //                 'address' => $address
+    //             ],
+    //             201
+    //         );    
+    //     }
+    //     else
+    //     {
+    //         return response()->json(
+    //             [
+    //                 'status' => false, 
+    //                 'message' => 'Thêm không thành công', 
+    //                 'address' => null
+    //             ],
+    //             422
+    //         );
+    //     }
+    // }
     public function trash(Request $condition)
     {
         $query = Address::where('status', '!=', 0)
@@ -252,7 +360,7 @@ class AddressController extends Controller
                 404
             );    
         }
-        $address->updated_at = date('Y-m-d H:i:s');
+        $address->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $address->updated_by = 1;
         $address->status = 0; 
         if($address->save())//Luuu vao CSDL
@@ -281,7 +389,7 @@ class AddressController extends Controller
                 404
             );    
         }
-        $address->updated_at = date('Y-m-d H:i:s');
+        $address->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $address->updated_by = 1;
         $address->status = 2; 
         if($address->save())//Luuu vao CSDL

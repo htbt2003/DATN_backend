@@ -184,7 +184,7 @@ class PromotionController extends Controller
         $promotion->name = $inforPromotion['name']; 
         $promotion->date_begin = $inforPromotion['date_begin'];
         $promotion->date_end = $inforPromotion['date_end'];
-        $promotion->created_at = date('Y-m-d H:i:s');
+        $promotion->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $promotion->created_by = $inforPromotion['user_id'];
         if($promotion->save())//Luuu vao CSDL
         {
@@ -313,7 +313,7 @@ class PromotionController extends Controller
                 404
             );    
         }
-        $promotion->updated_at = date('Y-m-d H:i:s');
+        $promotion->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $promotion->updated_by = 1;
         $promotion->status = 0; 
         if($promotion->save())//Luuu vao CSDL
@@ -342,7 +342,7 @@ class PromotionController extends Controller
                 404
             );    
         }
-        $promotion->updated_at = date('Y-m-d H:i:s');
+        $promotion->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $promotion->updated_by = 1;
         $promotion->status = 2; 
         if($promotion->save())//Luuu vao CSDL

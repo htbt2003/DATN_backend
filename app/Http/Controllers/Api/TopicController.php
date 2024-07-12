@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Topic;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 
 class TopicController extends Controller
@@ -40,7 +41,7 @@ class TopicController extends Controller
                 404
             );    
         }
-        $topic->updated_at = date('Y-m-d H:i:s');
+        $topic->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $topic->updated_by = 1;
         $topic->status = ($topic->status == 1) ? 2 : 1; //form
         if($topic->save())//Luuu vao CSDL
@@ -168,7 +169,7 @@ class TopicController extends Controller
         $topic->parent_id = $request->parent_id; //form
         $topic->metakey = $request->metakey; //form
         $topic->metadesc = $request->metadesc; //form
-        $topic->created_at = date('Y-m-d H:i:s');
+        $topic->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $topic->created_by = 1;
         $topic->status = $request->status; //form
         $topic->save(); //Luuu vao CSDL
@@ -189,7 +190,7 @@ class TopicController extends Controller
         $topic->parent_id = $request->parent_id; //form
         $topic->metakey = $request->metakey; //form
         $topic->metadesc = $request->metadesc; //form
-        $topic->updated_at = date('Y-m-d H:i:s');
+        $topic->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $topic->updated_by = 1;
         $topic->status = $request->status; //form
         $topic->save(); //Luuu vao CSDL
@@ -216,7 +217,7 @@ class TopicController extends Controller
                 404
             );    
         }
-        $topic->updated_at = date('Y-m-d H:i:s');
+        $topic->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $topic->updated_by = 1;
         $topic->status = 0; 
         if($topic->save())//Luuu vao CSDL
@@ -245,7 +246,7 @@ class TopicController extends Controller
                 404
             );    
         }
-        $topic->updated_at = date('Y-m-d H:i:s');
+        $topic->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $topic->updated_by = 1;
         $topic->status = 2; 
         if($topic->save())//Luuu vao CSDL

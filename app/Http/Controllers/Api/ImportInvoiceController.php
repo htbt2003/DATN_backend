@@ -9,6 +9,7 @@ use App\Models\OrderDetail;
 use App\Models\ProductStore;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use Carbon\Carbon;
 
 use Illuminate\Support\Facades\DB;
 
@@ -298,7 +299,7 @@ class ImportInvoiceController extends Controller
         $invoice->email = $request['email']; 
         $invoice->address = $request['address']; 
         $invoice->note = $request['note'];
-        $invoice->updated_at = date('Y-m-d H:i:s');
+        $invoice->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $invoice->updated_by = $request['user_id'];
         // $invoice->status = $request->status; //form
         if($invoice->save())//Luuu vao CSDL
@@ -338,7 +339,7 @@ class ImportInvoiceController extends Controller
                 404
             );    
         }
-        $invoice->updated_at = date('Y-m-d H:i:s');
+        $invoice->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $invoice->updated_by = 1;
         $invoice->status = 0; 
         if($invoice->save())//Luuu vao CSDL

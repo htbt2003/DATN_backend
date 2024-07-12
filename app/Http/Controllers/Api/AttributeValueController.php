@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\AttributeValue;
+use Carbon\Carbon;
 
 class AttributeValueController extends Controller
 {
@@ -124,7 +125,7 @@ class AttributeValueController extends Controller
         $brand->sort_order = $request->sort_order; //form
         $brand->metakey = $request->metakey; //form
         $brand->metadesc = $request->metadesc; //form
-        $brand->created_at = date('Y-m-d H:i:s');
+        $brand->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $brand->created_by = 1;
         $brand->status = $request->status; //form
         if($brand->save())//Luuu vao CSDL
@@ -180,7 +181,7 @@ class AttributeValueController extends Controller
         $brand->sort_order = $request->sort_order; //form
         $brand->metakey = $request->metakey; //form
         $brand->metadesc = $request->metadesc; //form
-        $brand->updated_at = date('Y-m-d H:i:s');
+        $brand->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $brand->updated_by = 1;
         $brand->status = $request->status; //form
         if($brand->save())//Luuu vao CSDL
@@ -220,7 +221,7 @@ class AttributeValueController extends Controller
                 404
             );    
         }
-        $brand->updated_at = date('Y-m-d H:i:s');
+        $brand->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $brand->updated_by = 1;
         $brand->status = 0; 
         if($brand->save())//Luuu vao CSDL
@@ -249,7 +250,7 @@ class AttributeValueController extends Controller
                 404
             );    
         }
-        $brand->updated_at = date('Y-m-d H:i:s');
+        $brand->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $brand->updated_by = 1;
         $brand->status = 2; 
         if($brand->save())//Luuu vao CSDL
@@ -316,7 +317,7 @@ class AttributeValueController extends Controller
                 404
             );    
         }
-        $product->updated_at = date('Y-m-d H:i:s');
+        $product->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $product->updated_by = 1;
         $product->status = ($product->status == 1) ? 2 : 1; //form
         if($product->save())//Luuu vao CSDL

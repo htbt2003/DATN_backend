@@ -11,6 +11,7 @@ use App\Mail\MyEmail;
 use Illuminate\Support\Facades\DB;
 use GuzzleHttp\Client;
 use App\Models\CartItem;
+use Carbon\Carbon;
 
 class OrderController extends Controller
 {
@@ -72,43 +73,81 @@ class OrderController extends Controller
             'order' => $order,
         ], 200);
     }
-    // public function getUSDRate()
-    // {
-    //     $client = new Client();
-    //     $response = $client->get('https://v6.exchangerate-api.com/v6/55281f5fd4dfce1a24054035/latest/USD', [
-    //         'query' => [
-    //             'app_id' => '55281f5fd4dfce1a24054035',
-    //             'symbols' => 'USD,VND'
-    //         ]
-    //     ]);
-
-    //     $rates = json_decode($response->getBody(), true);
-
-    //     if (isset($rates['rates']['USD']) && isset($rates['rates']['VND'])) {
-    //         $usdToVnd = $rates['rates']['VND'];
-    //         $vndToUsd = 1 / $usdToVnd;
-    //         return response()->json(['vnd_to_usd' => $vndToUsd, 'usd_to_vnd' => $usdToVnd]);
-    //     }
-
-    //     return response()->json(['error' => 'Unable to fetch exchange rates'], 500);
-    // }
+    public function cancel_order($id)
+    {
+        $order = Order::find($id);
+        if($order == null)//Luuu vao CSDL
+        {
+            return response()->json(
+                [
+                    'status' => false, 
+                    'message' => 'Đã chuyển vào thùng rác', 
+                    'order' => null
+                ],
+                404
+            );    
+        }
+        $order->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
+        $order->status = 5; 
+        if($order->save())//Luuu vao CSDL
+        {
+            return response()->json(
+                [
+                    'status' => true, 
+                    'message' => 'Xoá thành công', 
+                    'order' => $order
+                ],
+                201
+            );    
+        }
+    }
     public function order_userId($user_id)
     {
-        $args = [
+        // Define conditions for the orders query
+        $conditions = [
             ['user_id', '=', $user_id],
-            // ['status', '=', 1]
+            ['status', '!=', 7]
         ];
-        $order = Order::where($args)->orderBy('created_at', 'DESC')->first();
+    
+        // Fetch orders without the 'user' relationship
+        $orders = Order::where($conditions)
+            ->orderBy('created_at', 'DESC')
+            ->without('user')
+            ->get();
+    
+        // Loop through each order to fetch its details
+        foreach($orders as $order){
+            // Fetch order details with the necessary join and select
+            $orderDetails = OrderDetail::where('order_id', $order->id)
+                ->join('db_product as p', 'db_orderdetail.product_id', '=', 'p.id')
+                ->select(
+                    'db_orderdetail.id',
+                    'db_orderdetail.price as price_bill',
+                    'db_orderdetail.qty',
+                    'db_orderdetail.created_at',
+                    'db_orderdetail.variant_id',
+                    'p.name',
+                    'p.image',
+                    'p.price as price_sell'
+                )
+                ->orderBy('db_orderdetail.created_at', 'DESC')
+                ->get();
+    
+            // Assign the fetched details to the order
+            $order->orderDetails = $orderDetails;
+        }
+    
+        // Return the response with success message and orders data
         return response()->json(
             [
                 'success' => true,
                 'message' => 'Tải dữ liệu thành công',
-                'order' => $order
+                'orders' => $orders,
             ],
             200
         );
     }
-    public function changeStatus($id)
+        public function changeStatus($id)
     {
         $order = Order::find($id);
         if($order == null)//Luuu vao CSDL
@@ -122,7 +161,7 @@ class OrderController extends Controller
                 404
             );    
         }
-        $order->updated_at = date('Y-m-d H:i:s');
+        $order->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $order->updated_by = 1;
         $order->status = ($order->status == 1) ? 2 : 1; //form
         if($order->save())//Luuu vao CSDL
@@ -291,7 +330,7 @@ class OrderController extends Controller
         $order->email = $request->email; //form
         $order->address = $request->address; //form
         $order->note = $request->note; //form
-        $order->created_at = date('Y-m-d H:i:s');
+        $order->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $order->created_by = 1;
         $order->status = $request->status; //form
         $order->save(); //Luuu vao CSDL
@@ -313,7 +352,7 @@ class OrderController extends Controller
         $order->email = $request->email; //form
         $order->address = $request->address; //form
         $order->note = $request->note; //form
-        $order->updated_at = date('Y-m-d H:i:s');
+        $order->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $order->updated_by = 1;
         $order->status = $request->status; //form
         $order->save(); //Luuu vao CSDL
@@ -340,7 +379,7 @@ class OrderController extends Controller
                 404
             );    
         }
-        $order->updated_at = date('Y-m-d H:i:s');
+        $order->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $order->updated_by = 1;
         $order->status = 0; 
         if($order->save())//Luuu vao CSDL
@@ -369,7 +408,7 @@ class OrderController extends Controller
                 404
             );    
         }
-        $order->updated_at = date('Y-m-d H:i:s');
+        $order->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $order->updated_by = 1;
         $order->status = 2; 
         if($order->save())//Luuu vao CSDL

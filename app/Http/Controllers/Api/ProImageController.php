@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Image;
+use Carbon\Carbon;
 
 
 class ProImageController extends Controller
@@ -23,7 +24,7 @@ class ProImageController extends Controller
                 404
             );    
         }
-        $product->updated_at = date('Y-m-d H:i:s');
+        $product->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $product->updated_by = 1;
         $product->status = ($product->status == 1) ? 2 : 1; //form
         if($product->save())//Luuu vao CSDL
@@ -99,7 +100,7 @@ class ProImageController extends Controller
         $image->sort_order = $request->sort_order; //form
         $image->metakey = $request->metakey; //form
         $image->metadesc = $request->metadesc; //form
-        $image->created_at = date('Y-m-d H:i:s');
+        $image->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $image->created_by = 1;
         $image->status = $request->status; //form
         if($image->save())//Luuu vao CSDL
@@ -155,7 +156,7 @@ class ProImageController extends Controller
         $image->sort_order = $request->sort_order; //form
         $image->metakey = $request->metakey; //form
         $image->metadesc = $request->metadesc; //form
-        $image->updated_at = date('Y-m-d H:i:s');
+        $image->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $image->updated_by = 1;
         $image->status = $request->status; //form
         if($image->save())//Luuu vao CSDL

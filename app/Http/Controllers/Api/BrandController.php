@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Brand;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class BrandController extends Controller
 {
@@ -40,7 +41,7 @@ class BrandController extends Controller
                 404
             );    
         }
-        $brand->updated_at = date('Y-m-d H:i:s');
+        $brand->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $brand->updated_by = 1;
         $brand->status = ($brand->status == 1) ? 2 : 1; //form
         if($brand->save())//Luuu vao CSDL
@@ -180,7 +181,7 @@ class BrandController extends Controller
         $brand->sort_order = $request->sort_order; //form
         $brand->metakey = $request->metakey; //form
         $brand->metadesc = $request->metadesc; //form
-        $brand->created_at = date('Y-m-d H:i:s');
+        $brand->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $brand->created_by = 1;
         $brand->status = $request->status; //form
         if($brand->save())//Luuu vao CSDL
@@ -236,7 +237,7 @@ class BrandController extends Controller
         $brand->sort_order = $request->sort_order; //form
         $brand->metakey = $request->metakey; //form
         $brand->metadesc = $request->metadesc; //form
-        $brand->updated_at = date('Y-m-d H:i:s');
+        $brand->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $brand->updated_by = 1;
         $brand->status = $request->status; //form
         if($brand->save())//Luuu vao CSDL
@@ -276,7 +277,7 @@ class BrandController extends Controller
                 404
             );    
         }
-        $brand->updated_at = date('Y-m-d H:i:s');
+        $brand->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $brand->updated_by = 1;
         $brand->status = 0; 
         if($brand->save())//Luuu vao CSDL
@@ -305,7 +306,7 @@ class BrandController extends Controller
                 404
             );    
         }
-        $brand->updated_at = date('Y-m-d H:i:s');
+        $brand->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $brand->updated_by = 1;
         $brand->status = 2; 
         if($brand->save())//Luuu vao CSDL

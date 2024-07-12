@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class CategoryController extends Controller
 {
@@ -42,7 +43,7 @@ class CategoryController extends Controller
                 404
             );    
         }
-        $category->updated_at = date('Y-m-d H:i:s');
+        $category->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $category->updated_by = 1;
         $category->status = ($category->status == 1) ? 2 : 1; //form
         if($category->save())//Luuu vao CSDL
@@ -182,7 +183,7 @@ class CategoryController extends Controller
         $category->sort_order = $request->sort_order; //form
         $category->metakey = $request->metakey; //form
         $category->metadesc = $request->metadesc; //form
-        $category->created_at = date('Y-m-d H:i:s');
+        $category->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $category->created_by = 1;
         $category->status = $request->status; //form
         if($category->save())//Luuu vao CSDL
@@ -239,7 +240,7 @@ class CategoryController extends Controller
         $category->sort_order = $request->sort_order; //form
         $category->metakey = $request->metakey; //form
         $category->metadesc = $request->metadesc; //form
-        $category->updated_at = date('Y-m-d H:i:s');
+        $category->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $category->updated_by = 1;
         $category->status = $request->status; //form
         if($category->save())//Luuu vao CSDL
@@ -279,7 +280,7 @@ class CategoryController extends Controller
                 404
             );    
         }
-        $category->updated_at = date('Y-m-d H:i:s');
+        $category->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $category->updated_by = 1;
         $category->status = 0; 
         if($category->save())//Luuu vao CSDL
@@ -308,7 +309,7 @@ class CategoryController extends Controller
                 404
             );    
         }
-        $category->updated_at = date('Y-m-d H:i:s');
+        $category->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $category->updated_by = 1;
         $category->status = 2; 
         if($category->save())//Luuu vao CSDL

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Post;
 use Illuminate\Support\Str;
 use App\Models\Topic;
+use Carbon\Carbon;
 
 class PostController extends Controller
 {
@@ -188,7 +189,7 @@ class PostController extends Controller
                 404
             );    
         }
-        $post->updated_at = date('Y-m-d H:i:s');
+        $post->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $post->updated_by = 1;
         $post->status = ($post->status == 1) ? 2 : 1; //form
         if($post->save())//Luuu vao CSDL
@@ -331,7 +332,7 @@ class PostController extends Controller
         $post->type = $request->type; //form
         $post->metakey = $request->metakey; //form
         $post->metadesc = $request->metadesc; //form
-        $post->created_at = date('Y-m-d H:i:s');
+        $post->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $post->created_by = 1;
         $post->status = $request->status; //form
         $post->save(); //Luuu vao CSDL
@@ -390,7 +391,7 @@ class PostController extends Controller
         $post->type = $request->type; //form
         $post->metakey = $request->metakey; //form
         $post->metadesc = $request->metadesc; //form
-        $post->updated_at = date('Y-m-d H:i:s');
+        $post->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $post->updated_by = 1;
         $post->status = $request->status; //form
         if($post->save())//Luuu vao CSDL
@@ -430,7 +431,7 @@ class PostController extends Controller
                 404
             );    
         }
-        $post->updated_at = date('Y-m-d H:i:s');
+        $post->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $post->updated_by = 1;
         $post->status = 0; 
         if($post->save())//Luuu vao CSDL
@@ -459,7 +460,7 @@ class PostController extends Controller
                 404
             );    
         }
-        $post->updated_at = date('Y-m-d H:i:s');
+        $post->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $post->updated_by = 1;
         $post->status = 2; 
         if($post->save())//Luuu vao CSDL

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Contact;
+use Carbon\Carbon;
 
 class ContactController extends Controller
 {
@@ -22,7 +23,7 @@ class ContactController extends Controller
                 404
             );    
         }
-        $contact->updated_at = date('Y-m-d H:i:s');
+        $contact->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $contact->updated_by = 1;
         $contact->status = ($contact->status == 1) ? 2 : 1; //form
         if($contact->save())//Luuu vao CSDL
@@ -141,7 +142,7 @@ class ContactController extends Controller
         $contact->title = $request->title; //form
         $contact->content = $request->content; //form
         $contact->replay_id = $request->replay_id; //form
-        $contact->created_at = date('Y-m-d H:i:s');
+        $contact->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $contact->status = $request->status; //form
         if($contact->save())//Luuu vao CSDL
         {
@@ -187,7 +188,7 @@ class ContactController extends Controller
         $contact->title = $request->title; //form
         $contact->content = $request->content; //form
         $contact->replay_id = $request->replay_id; //form
-        $contact->updated_at = date('Y-m-d H:i:s');
+        $contact->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $contact->updated_by = 1;
         $contact->status = $request->status; //form
         if($contact->save())//Luuu vao CSDL
@@ -227,7 +228,7 @@ class ContactController extends Controller
                 404
             );    
         }
-        $contact->updated_at = date('Y-m-d H:i:s');
+        $contact->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $contact->updated_by = 1;
         $contact->status = 0; 
         if($contact->save())//Luuu vao CSDL
@@ -256,7 +257,7 @@ class ContactController extends Controller
                 404
             );    
         }
-        $contact->updated_at = date('Y-m-d H:i:s');
+        $contact->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $contact->updated_by = 1;
         $contact->status = 2; 
         if($contact->save())//Luuu vao CSDL

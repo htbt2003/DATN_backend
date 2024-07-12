@@ -26,10 +26,13 @@ use App\Http\Controllers\Api\ProductVariantController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\ImportInvoiceController;
 use App\Http\Controllers\Api\PromotionController;
+use App\Http\Controllers\Api\DashboardController;
 
 //address
-Route::get('address_userId/{id?}', [AddressController::class, 'address_userId']);
-Route::get('count_address_userId/{id?}', [AddressController::class, 'count_address_userId']);
+
+Route::get('default_address_userId/{id}', [AddressController::class, 'default_address_userId']);
+Route::get('address_userId/{id}', [AddressController::class, 'address_userId']);
+Route::get('count_address_userId/{id}', [AddressController::class, 'count_address_userId']);
 Route::prefix('address')->group(function () {
     Route::get('/', [AddressController::class, 'index']);
     Route::get('index?page={page}', [AddressController::class, 'index']);
@@ -83,6 +86,7 @@ Route::get('page_detail/{slug}', [PageController::class, 'page_detail']);
 Route::get('order_userId/{id}', [OrderController::class, 'order_userId']);
 Route::post('doCheckout', [OrderController::class, 'doCheckout']);
 Route::get('getUSDRate', [OrderController::class, 'getUSDRate']);
+Route::get('cancel_order/{id}', [OrderController::class, 'cancel_order']);
 
 
 
@@ -90,6 +94,9 @@ Route::get('reviewProduct/{product_id}', [ReviewController::class, 'review_produ
 Route::get('reviewProductUser/{product_id}/{user_id}', [ReviewController::class, 'review_product_user']);
 Route::post('review/store', [ReviewController::class, 'store']);
 Route::delete('review/destroy/{id}', [ReviewController::class, 'destroy']);
+
+Route::get('dashboard', [DashboardController::class,'dashboard']);
+
 
 Route::prefix('order')->group(function () {
     Route::get('index', [OrderController::class, 'index']);
