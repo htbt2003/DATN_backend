@@ -195,7 +195,7 @@ class PromotionController extends Controller
                     'product_id' => $item['product_id'],
                     'variant_id' => $item['variant_id'] ?? null,
                     'price_sale' => $item['price_sale'],
-                    'qty' => $item['qty'],
+                    'qty' => $item['qty']??null,
                     'created_at' => now(),
                     'created_by' => $inforPromotion['user_id'],
                 ]);
@@ -254,7 +254,7 @@ class PromotionController extends Controller
                 'product_id' => $item['product_id'],
                 'variant_id' => $item['variant_id'] ?? null,
                 'price_sale' => $item['price_sale'],
-                'qty' => $item['qty'],
+                'qty' => $item['qty'] ?? null,
                 'created_at' => now(),
                 'created_by' => $inforPromotion['user_id'],
             ]);

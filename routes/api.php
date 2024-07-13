@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\ImportInvoiceController;
 use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ConfigController;
 
 //address
 
@@ -179,7 +180,7 @@ Route::prefix('menu')->group(function () {
     Route::get('index', [MenuController::class, 'index']);
     Route::get('show/{id}', [MenuController::class, 'show']);
     Route::post('store', [MenuController::class, 'store']);
-    Route::get('tao/{position}/{type}/{listid}', [MenuController::class, 'tao']);
+    Route::post('tao', [MenuController::class, 'tao']);
     Route::post('update/{id}', [MenuController::class, 'update']);
     Route::delete('destroy/{id}', [MenuController::class, 'destroy']);
     Route::get('change_status/{key}', [MenuController::class, 'changeStatus']);

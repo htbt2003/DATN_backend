@@ -13,21 +13,21 @@ class PostController extends Controller
 {
     function post_list($limit, $type)
     {
-        $post = Post::orderBy('created_at', 'DESC')->first();
+        // $post = Post::orderBy('created_at', 'DESC')->first();
         $args = [
             ['type', '=', $type],
             ['status', '=', 1],
-            ['id', '!=', $post->id]
+            // ['id', '!=', $post->id]
         ];
         $posts = Post::where($args)
             ->orderBy('created_at', 'DESC')
-            -> limit($limit)
+            ->limit($limit)
             ->get();
         return response()->json(
             [
                 'status' => true,
                 'message' => 'Tải dữ liệu thành công',
-                'posts' => $posts
+                'posts' => $posts,
             ],
             200
         );

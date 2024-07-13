@@ -36,7 +36,7 @@ class Product extends Model
         ->groupBy('variant_id'); 
 
         return $this->hasMany(ProductVariant::class)
-            ->joinSub($productstoreV, 'productstoreV', function($join){
+            ->leftJoinSub($productstoreV, 'productstoreV', function($join){
                 $join->on('db_product_variant.id', '=', 'productstoreV.variant_id');
             })
             ->leftJoinSub($orderdetailV, 'orderdetailV', function($join){

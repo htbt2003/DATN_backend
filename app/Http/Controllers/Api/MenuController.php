@@ -20,12 +20,12 @@ class MenuController extends Controller
             ['status', '=', 1]
         ];
         $menus = Menu::where($args)
-            ->orderBy('created_at', 'ASC')
+            ->orderBy('created_at', 'DESC')
             ->get();
         foreach($menus as $menu){
             $menu->children = Menu::where('parent_id', $menu->id)
                 ->where('status', 1)
-                ->orderBy('created_at', 'ASC')
+                ->orderBy('created_at', 'DESC')
                 ->get();
         }
         if(count($menus)){
@@ -205,115 +205,17 @@ class MenuController extends Controller
             200
         );
     }
-    public function store(Request $request)
+    public function tao(Request $request)
     {
-        $listid =  $request->listid;
-        $type =  $request->type;
+        $position = $request->position;
+        $type = $request->type;
+        $listid = $request->listid;
         $flag = false;
         switch ($type) {
             case "danh-muc-san-pham":
-                foreach ($listid as $id)
-                {
-                    // $intValue = intval($id);
-                    $category = Category::find($id);
-                    $menu = new Menu();
-                    $menu->name = $category->name;
-                    $menu->link = '/danh-muc-san-pham/'.$category->slug; 
-                    $menu->parent_id = 0;
-                    $menu->type = $request->type;
-                    $menu->created_at = Carbon::now('Asia/Ho_Chi_Minh');
-                    $menu->created_by = 1;
-                    $menu->status = 2;
-                    $menu->position = $request->position;    
-                    $menu->save();      
-                }
-                $flag = true;
-                break;
-            case "thuong-hieu":
                 foreach($listid as $id)
                 {
-                    $menu = Menu::find($id);
-                    $menu = new Menu();
-                    $menu->name = $menu->name;
-                    $menu->link = '/thuong-hieu/'.$menu->slug; 
-                    $menu->parent_id = 0;
-                    $menu->type = $request->type;
-                    $menu->created_at = Carbon::now('Asia/Ho_Chi_Minh');
-                    $menu->created_by = 1;
-                    $menu->status = 2;
-                    $menu->position = $request->position;    
-                    $menu->save();      
-                }
-                $flag = true;
-                break;
-                case "chu-de-bai-viet":
-                    foreach($listid as $id)
-                    {
-                        $topic = Topic::find($id);
-                        $menu = new Menu();
-                        $menu->name = $menu->name;
-                        $menu->link = '/chu-de-bai-viet/'.$topic->slug; 
-                        $menu->parent_id = 0;
-                        $menu->type = $request->type;
-                        $menu->created_at = Carbon::now('Asia/Ho_Chi_Minh');
-                        $menu->created_by = 1;
-                        $menu->status = 2;
-                        $menu->position = $request->position;    
-                        $menu->save();      
-                    }
-                    $flag = true;
-                    break;
-                case "trang-don":
-                    foreach($listid as $id)
-                    {
-                        $page = Post::find($id);
-                        $menu = new Menu();
-                        $menu->name = $menu->name;
-                        $menu->link = '/trang-don/'.$page->slug; 
-                        $menu->parent_id = 0;
-                        $menu->type = $request->type;
-                        $menu->created_at = Carbon::now('Asia/Ho_Chi_Minh');
-                        $menu->created_by = 1;
-                        $menu->status = 2;
-                        $menu->position = $request->position;    
-                        $menu->save();      
-                    }
-                    $flag = true;
-                    break;
-        }
-        if($flag)//Luuu vao CSDL
-        {
-            return response()->json(
-                [
-                    'status' => true, 
-                    'message' => 'Thêm thành công', 
-                    'type' => $type, 
-                    'listid' => $listid, 
-                ],
-                201
-            );    
-        }
-        else
-        {
-            return response()->json(
-                [
-                    'status' => false, 
-                    'message' => 'Không thành công', 
-                    'type' => $type, 
-                    'listid' => $listid, 
-                ],
-                422
-            );
-        }
-    }
-    public function tao($position, $type, $listid)
-    {
-        $flag = true;
-        switch ($type) {
-            case "danh-muc-san-pham":
-                for ($i = 0; $i < strlen($listid); $i++)
-                {
-                    $category = Category::find($listid[$i]);
+                    $category = Category::find($id);
                     $menu = new Menu();
                     $menu->name = $category->name;
                     $menu->link = 'danh-muc-san-pham/'.$category->slug; 
@@ -328,12 +230,12 @@ class MenuController extends Controller
                 $flag = true;
                 break;
             case "thuong-hieu":
-                for ($i = 0; $i < strlen($listid); $i++)
+                foreach($listid as $id)
                 {
-                    $menu = Menu::find($listid[$i]);
+                    $brand = Brand::find($id);
                     $menu = new Menu();
-                    $menu->name = $menu->name;
-                    $menu->link = 'thuong-hieu/'.$menu->slug; 
+                    $menu->name = $brand->name;
+                    $menu->link = 'thuong-hieu/'.$brand->slug; 
                     $menu->parent_id = 0;
                     $menu->type = $type;
                     $menu->created_at = Carbon::now('Asia/Ho_Chi_Minh');
@@ -345,9 +247,9 @@ class MenuController extends Controller
                 $flag = true;
                 break;
                 case "chu-de-bai-viet":
-                    for ($i = 0; $i < strlen($listid); $i++)
-                    {
-                        $topic = Topic::find($listid[$i]);
+                    foreach($listid as $id)
+                    { 
+                        $topic = Topic::find($id);
                         $menu = new Menu();
                         $menu->name = $topic->name;
                         $menu->link = 'chu-de-bai-viet/'.$topic->slug; 
@@ -362,9 +264,9 @@ class MenuController extends Controller
                     $flag = true;
                     break;
                 case "trang-don":
-                    for ($i = 0; $i < strlen($listid); $i++)
+                    foreach($listid as $id)
                     {
-                        $page = Post::find($listid[$i]);
+                        $page = Post::find($id);
                         $menu = new Menu();
                         $menu->name = $page->title;
                         $menu->link = 'trang-don/'.$page->slug; 
@@ -433,7 +335,7 @@ class MenuController extends Controller
                 [
                     'status' => true, 
                     'message' => 'Cập nhật dữ liệu thành công', 
-                    'menu' => $menu
+                    'menu' => $menu,
                 ],
                 201
             );    

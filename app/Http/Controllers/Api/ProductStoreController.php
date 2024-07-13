@@ -258,76 +258,76 @@ class ProductStoreController extends Controller
         //lấy giá, sô lượng cũ
         $price_root_old = $prostore->price_root;
         $qty_old = $prostore->qty;
-    
-        //Cập nhật
+        //cập nhật cost
+        if ($prostore->variant_id != null) {
+            $product = ProductVariant::select('cost')
+                ->where('id', '=', $prostore->variant_id)
+                ->first();
+
+            $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+                ->where([
+                    ['status', '=', 1],
+                    ['product_id', '=', $prostore->product_id],
+                    ['variant_id', $prostore->variant_id],
+                ])
+                ->groupBy('product_id', 'variant_id')
+                ->first();
+
+            $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
+                ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+                ->whereNotIn('db_order.status', [0, 5, 6])
+                ->where('db_orderdetail.product_id', '=', $prostore->product_id)
+                ->where('db_orderdetail.variant_id', $prostore->variant_id)
+                ->groupBy('product_id', 'variant_id')
+                ->first();
+
+            $cost = $product->cost ?? 0;
+            $qty_inventory = ($productstore->sum_qty_store ?? 0)-($orderdetail->sum_qty_selled ?? 0);
+            //tính lại trung bình giá gốc trên một sản phẩm = tổng giá trị đúng / số lượng kho đúng => đây là giá gốc hiện tại
+            $rightCost = (($cost * $qty_inventory) - ($price_root_old * $qty_old)) / ($qty_inventory - $qty_old);
+            //tính trung bình giá gốc mới 
+            $newCost = (($rightCost * ($qty_inventory - $qty_old)) + ($request->price_root * $request->qty)) / (($qty_inventory - $qty_old) + $request->qty);
+            //cập nhật cost
+            ProductVariant::where('id', $prostore->variant_id)->update(['cost' => $newCost]);
+        } else {
+            $product = Product::select('cost')
+                ->where('db_product.id', '=', $prostore->product_id)
+                ->first();
+
+            $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+                ->where([
+                    ['status', '=', 1],
+                    ['product_id', '=', $prostore->product_id],
+                ])
+                ->groupBy('product_id')
+                ->first();
+
+            $orderdetail = OrderDetail::select('db_orderdetail.product_id', DB::raw('SUM(qty) as sum_qty_selled'))
+                ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+                ->whereNotIn('db_order.status', [0, 5, 6])
+                ->where('db_orderdetail.product_id', '=', $prostore->product_id)
+                ->groupBy('db_orderdetail.product_id')
+                ->first();
+
+            $cost = $product->cost ?? 0;
+            $qty_inventory = ($productstore->sum_qty_store ?? 0)-($orderdetail->sum_qty_selled ?? 0);
+
+            //tính lại trung bình giá gốc trên một sản phẩm = tổng giá trị đúng / số lượng kho đúng => đây là giá gốc hiện tại
+            $rightCost = (($cost * $qty_inventory) - ($price_root_old * $qty_old)) / ($qty_inventory - $qty_old);
+            //tính trung bình giá gốc mới 
+            $newCost = (($rightCost * ($qty_inventory - $qty_old)) + ($request->price_root * $request->qty)) / (($qty_inventory - $qty_old) + $request->qty);
+            //cập nhật cost
+            Product::where('id', $prostore->product_id)->update(['cost' => $newCost]);
+        }
+
+        //Cập nhật kho
         $prostore->qty = $request->qty; //form
         $prostore->price_root = $request->price_root; //form
         $prostore->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $prostore->updated_by = $request->user_id;
 
         if($prostore->save())//Luuu vao CSDL
-        {
-            if ($prostore->variant_id != null) {
-                $product = ProductVariant::select('cost')
-                    ->where('id', '=', $prostore->variant_id)
-                    ->first();
-
-                $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
-                    ->where([
-                        ['status', '=', 1],
-                        ['product_id', '=', $prostore->product_id],
-                        ['variant_id', $prostore->variant_id],
-                    ])
-                    ->groupBy('product_id', 'variant_id')
-                    ->first();
-
-                $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
-                    ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
-                    ->whereNotIn('db_order.status', [0, 5, 6])
-                    ->where('db_orderdetail.product_id', '=', $prostore->product_id)
-                    ->where('db_orderdetail.variant_id', $prostore->variant_id)
-                    ->groupBy('product_id', 'variant_id')
-                    ->first();
-
-                $cost = $product->cost ?? 0;
-                $qty_inventory = ($productstore->sum_qty_store ?? 0)-($orderdetail->sum_qty_selled ?? 0);
-                //tính lại trung bình giá gốc trên một sản phẩm = tổng giá trị đúng / số lượng kho đúng => đây là giá gốc hiện tại
-                $rightCost = (($cost * $qty_inventory) - ($price_root_old * $qty_old)) / ($qty_inventory - $qty_old);
-                //tính trung bình giá gốc mới 
-                $newCost = (($rightCost * ($qty_inventory - $qty_old)) + ($request->price_root * $request->qty)) / (($qty_inventory - $qty_old) + $request->qty);
-                //cập nhật cost
-                ProductVariant::where('id', $prostore->variant_id)->update(['cost' => $newCost]);
-            } else {
-                $product = Product::select('cost')
-                    ->where('db_product.id', '=', $prostore->product_id)
-                    ->first();
-
-                $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
-                    ->where([
-                        ['status', '=', 1],
-                        ['product_id', '=', $prostore->product_id],
-                    ])
-                    ->groupBy('product_id')
-                    ->first();
-
-                $orderdetail = OrderDetail::select('db_orderdetail.product_id', DB::raw('SUM(qty) as sum_qty_selled'))
-                    ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
-                    ->whereNotIn('db_order.status', [0, 5, 6])
-                    ->where('db_orderdetail.product_id', '=', $prostore->product_id)
-                    ->groupBy('db_orderdetail.product_id')
-                    ->first();
-
-                $cost = $product->cost ?? 0;
-                $qty_inventory = ($productstore->sum_qty_store ?? 0)-($orderdetail->sum_qty_selled ?? 0);
-
-                //tính lại trung bình giá gốc trên một sản phẩm = tổng giá trị đúng / số lượng kho đúng => đây là giá gốc hiện tại
-                $rightCost = (($cost * $qty_inventory) - ($price_root_old * $qty_old)) / ($qty_inventory - $qty_old);
-                //tính trung bình giá gốc mới 
-                $newCost = (($rightCost * ($qty_inventory - $qty_old)) + ($request->price_root * $request->qty)) / (($qty_inventory - $qty_old) + $request->qty);
-                //cập nhật cost
-                Product::where('id', $prostore->product_id)->update(['cost' => $newCost]);
-            }
-    
+        {    
             return response()->json(
                 [
                     'status' => true, 
@@ -366,68 +366,68 @@ class ProductStoreController extends Controller
         //lấy giá, sô lượng cũ
         $price_root_old = $prostore->price_root;
         $qty_old = $prostore->qty;
-        
+        if ($prostore->variant_id != null) {
+            $product = ProductVariant::select('cost')
+                ->where('id', '=', $prostore->variant_id)
+                ->first();
+
+            $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+                ->where([
+                    ['status', '=', 1],
+                    ['product_id', '=', $prostore->product_id],
+                    ['variant_id', $prostore->variant_id],
+                ])
+                ->groupBy('product_id', 'variant_id')
+                ->first();
+
+            $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
+                ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+                ->whereNotIn('db_order.status', [0, 5, 6])
+                ->where('db_orderdetail.product_id', '=', $prostore->product_id)
+                ->where('db_orderdetail.variant_id', $prostore->variant_id)
+                ->groupBy('product_id', 'variant_id')
+                ->first();
+
+            $cost = $product->cost ?? 0;
+            $qty_inventory = ($productstore->sum_qty_store ?? 0)-($orderdetail->sum_qty_selled ?? 0);
+            //tính lại trung bình giá gốc trên một sản phẩm = tổng giá trị đúng / số lượng kho đúng => đây là giá gốc hiện tại
+            $rightCost = (($cost * $qty_inventory) - ($price_root_old * $qty_old)) / ($qty_inventory - $qty_old);
+            ProductVariant::where('id', $prostore->variant_id)->update(['cost' => $rightCost]);
+        } else {
+            $product = Product::select('cost')
+                ->where('db_product.id', '=', $prostore->product_id)
+                ->first();
+
+            $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
+                ->where([
+                    ['status', '=', 1],
+                    ['product_id', '=', $prostore->product_id],
+                ])
+                ->groupBy('product_id')
+                ->first();
+
+            $orderdetail = OrderDetail::select('db_orderdetail.product_id', DB::raw('SUM(qty) as sum_qty_selled'))
+                ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
+                ->whereNotIn('db_order.status', [0, 5, 6])
+                ->where('db_orderdetail.product_id', '=', $prostore->product_id)
+                ->groupBy('db_orderdetail.product_id')
+                ->first();
+
+            $cost = $product->cost ?? 0;
+            $qty_inventory = ($productstore->sum_qty_store ?? 0)-($orderdetail->sum_qty_selled ?? 0);
+
+            //tính lại trung bình giá gốc trên một sản phẩm = tổng giá trị đúng / số lượng kho đúng => đây là giá gốc hiện tại
+            $rightCost = (($cost * $qty_inventory) - ($price_root_old * $qty_old)) / ($qty_inventory - $qty_old);
+            //cập nhật cost
+            Product::where('id', $prostore->product_id)->update(['cost' => $rightCost]);
+        }
+
         //delete
         $prostore->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $prostore->updated_by = 1;
         $prostore->status = 0; 
         if($prostore->save())//Luuu vao CSDL
         {
-            if ($prostore->variant_id != null) {
-                $product = ProductVariant::select('cost')
-                    ->where('id', '=', $prostore->variant_id)
-                    ->first();
-
-                $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
-                    ->where([
-                        ['status', '=', 1],
-                        ['product_id', '=', $prostore->product_id],
-                        ['variant_id', $prostore->variant_id],
-                    ])
-                    ->groupBy('product_id', 'variant_id')
-                    ->first();
-
-                $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
-                    ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
-                    ->whereNotIn('db_order.status', [0, 5, 6])
-                    ->where('db_orderdetail.product_id', '=', $prostore->product_id)
-                    ->where('db_orderdetail.variant_id', $prostore->variant_id)
-                    ->groupBy('product_id', 'variant_id')
-                    ->first();
-
-                $cost = $product->cost ?? 0;
-                $qty_inventory = ($productstore->sum_qty_store ?? 0)-($orderdetail->sum_qty_selled ?? 0);
-                //tính lại trung bình giá gốc trên một sản phẩm = tổng giá trị đúng / số lượng kho đúng => đây là giá gốc hiện tại
-                $rightCost = (($cost * $qty_inventory) - ($price_root_old * $qty_old)) / ($qty_inventory - $qty_old);
-                ProductVariant::where('id', $prostore->variant_id)->update(['cost' => $rightCost]);
-            } else {
-                $product = Product::select('cost')
-                    ->where('db_product.id', '=', $prostore->product_id)
-                    ->first();
-
-                $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
-                    ->where([
-                        ['status', '=', 1],
-                        ['product_id', '=', $prostore->product_id],
-                    ])
-                    ->groupBy('product_id')
-                    ->first();
-
-                $orderdetail = OrderDetail::select('db_orderdetail.product_id', DB::raw('SUM(qty) as sum_qty_selled'))
-                    ->join('db_order', 'db_orderdetail.order_id', '=', 'db_order.id')
-                    ->whereNotIn('db_order.status', [0, 5, 6])
-                    ->where('db_orderdetail.product_id', '=', $prostore->product_id)
-                    ->groupBy('db_orderdetail.product_id')
-                    ->first();
-
-                $cost = $product->cost ?? 0;
-                $qty_inventory = ($productstore->sum_qty_store ?? 0)-($orderdetail->sum_qty_selled ?? 0);
-
-                //tính lại trung bình giá gốc trên một sản phẩm = tổng giá trị đúng / số lượng kho đúng => đây là giá gốc hiện tại
-                $rightCost = (($cost * $qty_inventory) - ($price_root_old * $qty_old)) / ($qty_inventory - $qty_old);
-                //cập nhật cost
-                Product::where('id', $prostore->product_id)->update(['cost' => $rightCost]);
-            }
 
             return response()->json(
                 [

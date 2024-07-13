@@ -1454,15 +1454,15 @@ class ProductController extends Controller
         $product->slug = Str::of($request->name)->slug('-');
         $product->price = $request->price; //form
         //upload image
-        $files = $request->image;
-        if ($files != null) {
-            $extension = $files->getClientOriginalExtension();
-            if (in_array($extension, ['jpg', 'png', 'gif', 'webp', 'jpeg'])) {
-                $filename = date('YmdHis') . '.' . $extension;
-                $product->image = $filename;
-                $files->move(public_path('images/product'), $filename);
-            }
-        }
+        // $files = $request->image;
+        // if ($files != null) {
+        //     $extension = $files->getClientOriginalExtension();
+        //     if (in_array($extension, ['jpg', 'png', 'gif', 'webp', 'jpeg'])) {
+        //         $filename = date('YmdHis') . '.' . $extension;
+        //         $product->image = $filename;
+        //         $files->move(public_path('images/product'), $filename);
+        //     }
+        // }
         //
         $product->detail = $request->detail; //form
         $product->metakey = $request->metakey; //form

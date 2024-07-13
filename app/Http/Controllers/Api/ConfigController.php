@@ -43,6 +43,15 @@ class ConfigController extends Controller
         $config->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $config->updated_by = 1;
         $config->status = $request->status; //form
+        $files = $request->logo;
+        if ($files != null) {
+            $extension = $files->getClientOriginalExtension();
+            if (in_array($extension, ['jpg', 'png', 'gif', 'webp', 'jpeg'])) {
+                $filename = date('YmdHis') . '.' . $extension;
+                $config->logo = $filename;
+                $files->move(public_path('images/config'), $filename);
+            }
+        }
         if($config->save())//Luuu vao CSDL
         {
             return response()->json(

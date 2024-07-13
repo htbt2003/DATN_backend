@@ -17,7 +17,7 @@ class CategoryController extends Controller
             ['status', '=', 1]
         ];
         $categories = Category::where($args)
-            ->orderBy('sort_order', 'ASC')
+            ->orderBy('created_at', 'DESC')
             ->select('id', 'name', 'slug', 'status' )
             ->get();
         return response()->json(

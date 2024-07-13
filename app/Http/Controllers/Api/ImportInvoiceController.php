@@ -16,40 +16,40 @@ use Illuminate\Support\Facades\DB;
 class ImportInvoiceController extends Controller
 {
     public function importInvoice(Request $request)
-{
-    // Extract the main import invoice details
-    $invoiceData = $request->importInvoice;
-    
-    // Create a new ImportInvoice instance
-    $importInvoice = new ImportInvoice();
-    $order->name = $orderData['name']; 
-    $order->phone = $orderData['phone']; 
-    $order->email = $orderData['email']; 
-    $order->address = $orderData['address']; 
-    $importInvoice->note = $invoiceData['note'];
-    $importInvoice->created_at = now();
-    $importInvoice->created_by = $invoiceData['user_id'];
-    $importInvoice->save();
+    {
+        // Extract the main import invoice details
+        $invoiceData = $request->importInvoice;
+        
+        // Create a new ImportInvoice instance
+        $importInvoice = new ImportInvoice();
+        $order->name = $orderData['name']; 
+        $order->phone = $orderData['phone']; 
+        $order->email = $orderData['email']; 
+        $order->address = $orderData['address']; 
+        $importInvoice->note = $invoiceData['note'];
+        $importInvoice->created_at = now();
+        $importInvoice->created_by = $invoiceData['user_id'];
+        $importInvoice->save();
 
-    // Loop through the list of invoices and save each one
-    foreach ($request->Listinvoices as $invoice) {
-        DB::table('import_invoice_details')->insert([
-            'import_invoice_id' => $importInvoice->id,
-            'invoice_id' => $invoice['invoice_id'],
-            'variant_id' => $invoice['variant_id'],
-            'quantity' => $invoice['quantity'],
-            'price_root' => $invoice['price_root'],
-            'created_at' => now(),
-        ]);
+        // Loop through the list of invoices and save each one
+        foreach ($request->Listinvoices as $invoice) {
+            DB::table('import_invoice_details')->insert([
+                'import_invoice_id' => $importInvoice->id,
+                'invoice_id' => $invoice['invoice_id'],
+                'variant_id' => $invoice['variant_id'],
+                'quantity' => $invoice['quantity'],
+                'price_root' => $invoice['price_root'],
+                'created_at' => now(),
+            ]);
+        }
+
+        // Return a response
+        return response()->json([
+            'status' => true,
+            'message' => 'Import invoice created successfully',
+            'importInvoice' => $importInvoice,
+        ], 200);
     }
-
-    // Return a response
-    return response()->json([
-        'status' => true,
-        'message' => 'Import invoice created successfully',
-        'importInvoice' => $importInvoice,
-    ], 200);
-}
 
     public function action_trash(Request $request)
     {
@@ -200,15 +200,7 @@ class ImportInvoiceController extends Controller
     
         if ($importInvoice->save()) {
             foreach ($request->Listproducts as $invoice) {
-                DB::table('db_productstore')->insert([
-                    'import_invoice_id' => $importInvoice->id,
-                    'variant_id' => $invoice['variant_id'] ?? null,
-                    'product_id' => $invoice['product_id'],
-                    'qty' => $invoice['qty'],
-                    'price_root' => $invoice['price_root'],
-                    'created_at' => now(),
-                ]);
-    
+                //cập nhật giá cost
                 if ($invoice['variant_id'] != null) {
                     $product = ProductVariant::select('cost')
                         ->where('id', '=', $invoice['variant_id'])
@@ -217,7 +209,7 @@ class ImportInvoiceController extends Controller
                      $productstore = ProductStore::select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
                         ->where('status', '=', 1)
                         ->where('product_id', '=', $invoice['product_id'])
-                        ->where('variant_id', $invoice['variant_id'])
+                        ->where('variant_id','=', $invoice['variant_id'])
                         ->groupBy('product_id', 'variant_id')
                         ->first();
     
@@ -229,7 +221,7 @@ class ImportInvoiceController extends Controller
                         ->groupBy('product_id', 'variant_id')
                         ->first();
     
-                    $cost = $product->cost ?? 0;
+                    $cost = $product->cost;
                     $qty_inventory = ($productstore->sum_qty_store ?? 0)-($orderdetail->sum_qty_selled ?? 0);
     
                     $newCost = (($cost * $qty_inventory) + ($invoice['price_root'] * $invoice['qty'])) / ($qty_inventory + $invoice['qty']);
@@ -252,19 +244,28 @@ class ImportInvoiceController extends Controller
                         ->groupBy('db_orderdetail.product_id')
                         ->first();
     
-                    $cost = $product->cost ?? 0;
+                    $cost = $product->cost;
                     $qty_inventory = ($productstore->sum_qty_store ?? 0)-($orderdetail->sum_qty_selled ?? 0);
     
                     $newCost = (($cost * $qty_inventory) + ($invoice['price_root'] * $invoice['qty'])) / ($qty_inventory + $invoice['qty']);
                     Product::where('id', $invoice['product_id'])->update(['cost' => $newCost]);
                 }
+                            //tạo kho
+            DB::table('db_productstore')->insert([
+                'import_invoice_id' => $importInvoice->id,
+                'variant_id' => $invoice['variant_id'] ?? null,
+                'product_id' => $invoice['product_id'],
+                'qty' => $invoice['qty'],
+                'price_root' => $invoice['price_root'],
+                'created_at' => now(),
+            ]);
             }
-    
+
             return response()->json(
                 [
                     'status' => true,
                     'message' => 'Thành công',
-                    'importInvoice' => $importInvoice
+                    'importInvoice' => $importInvoice,
                 ],
                 201
             );

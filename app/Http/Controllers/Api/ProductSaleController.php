@@ -45,6 +45,9 @@ class ProductSaleController extends Controller
                 'product.category_id',
                 'product.brand_id',
             ])
+            ->orderBy('db_productsale.created_at', 'DESC')
+            ->paginate(5);
+
             if ($condition->input('brandId') != null) {
                 $query->where('product.brand_id', $condition->input('brandId'));
             }
@@ -61,9 +64,7 @@ class ProductSaleController extends Controller
                         ->orWhere('product.categoryname', 'like', '%' . $key . '%')
                         ->orWhere('product.brandname', 'like', '%' . $key . '%');
                 });
-            }
-            ->orderBy('db_productsale.created_at', 'DESC')
-            ->paginate(5);
+            };
         $total = ProductSale::count();
         return response()->json(
             [

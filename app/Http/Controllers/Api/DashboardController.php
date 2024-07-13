@@ -82,8 +82,8 @@ class DashboardController extends Controller
 
         // Tổng doanh thu và lợi nhuận
         $total_revenue_profit = OrderDetail::select(
-            DB::raw('SUM(db_orderdetail.qty * db_orderdetail.price) as total_profit'),
-            DB::raw('SUM(db_orderdetail.qty * db_orderdetail.price_root) as total_revenue')
+            DB::raw('SUM(db_orderdetail.qty * db_orderdetail.price_root) as total_profit'),
+            DB::raw('SUM(db_orderdetail.qty * db_orderdetail.price) as total_revenue')
         )
         ->join('db_order as o', 'db_orderdetail.order_id', '=', 'o.id')
         ->whereNotIn('o.status', [5, 6, 7])
@@ -130,8 +130,8 @@ class DashboardController extends Controller
             case 'daily':
                 $startDate = Carbon::parse($date)->startOfDay();
                 $endDate = Carbon::parse($date)->endOfDay();
-                $groupBy = DB::raw('DATE_FORMAT(o.created_at, "%Y-%m-%d %H:00:00")');
-                $selectDate = DB::raw('DATE_FORMAT(o.created_at, "%H:%i") as stat_date');
+                $groupBy = DB::raw('DATE_FORMAT(o.created_at, "%H")');
+                $selectDate = DB::raw('DATE_FORMAT(o.created_at, "%H:00") as stat_date');
                 break;
     
             case 'weekly':
