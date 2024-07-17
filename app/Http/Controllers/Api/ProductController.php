@@ -1153,7 +1153,7 @@ class ProductController extends Controller
     }
     public function trash(Request $condition)
     {
-        $productstore = ProductStore::where('status', '=', 1)
+        $productstore = ProductStore::where('status', '=', 0)
         ->select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
             ->groupBy('product_id');
         $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
@@ -1489,6 +1489,52 @@ class ProductController extends Controller
                 }
             }
         }
+            // Process and save optionAttr
+            if ($request->isVariant == 1) {
+                if ($request->has('attributeDelete')) {
+                    foreach ($request->attributeDelete as $id) {
+                        $attribute = DB::table('db_product_attribute')->find($id);
+                        if ($attribute) {
+                            DB::table('db_product_attribute')->where('id', $id)->delete();
+                        }
+                    }
+                }
+                if ($request->has('attributeValueDelete')) {
+                    foreach ($request->attributeValueDelete as $id) {
+                        $attribute = DB::table('db_product_attribute_value')->find($id);
+                        if ($attribute) {
+                            DB::table('db_product_attribute_value')->where('id', $id)->delete();
+                        }
+                    }
+                }
+                if ($request->has('attributeValueUpdate')) {
+                    foreach ($request->attributeValueUpdate as $value) {
+                        $attribute = DB::table('db_product_attribute_value')->find($value['id']);
+                        if ($attribute) {
+                            DB::table('db_product_attribute_value')
+                            ->where('id', $id)
+                            ->update(['attribute_value_id' => $value['attribute_value_id']]);
+                        }
+                    }
+                }
+                if ($request->has('optionAttrs')) {
+                    foreach ($request->optionAttrs as $optionAttr) {
+                        // Create a ProductAttribute object
+                        $proAttribute = new ProductAttribute();
+                        $proAttribute->product_id = $product->id;
+                        $proAttribute->attribute_id = $optionAttr['attribute_id'];
+                        if ($proAttribute->save()) {
+                            foreach ($optionAttr['values'] as $value) {
+                                DB::table('db_product_attribute_value')->insert([
+                                    'product_attribute_id' => $proAttribute->id,
+                                    'attribute_value_id' => $value['attribute_value_id'],
+                                    // 'image' => $value['image'],
+                                ]);
+                            }
+                        }
+                    }
+                }
+            }
 
         if($product->save())//Luuu vao CSDL
         {
