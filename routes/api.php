@@ -131,6 +131,7 @@ Route::prefix('cart')->group(function () {
 
 Route::prefix('variant')->group(function () {
     Route::post('store', [ProductVariantController::class, 'store']);
+    Route::post('update', [ProductVariantController::class, 'update']);
 });
 
 

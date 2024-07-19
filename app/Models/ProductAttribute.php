@@ -11,6 +11,9 @@ class ProductAttribute extends Model
 {
     use HasFactory;
     protected $table = 'db_product_attribute';
+    protected $fillable = [
+        'attribute_id', 
+    ];
     protected $with = ['product_attribute_values', 'attribute'];
     public $timestamps = false;
     public function product_attribute_values()

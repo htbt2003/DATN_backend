@@ -10,56 +10,56 @@ use Carbon\Carbon;
 class AttributeController extends Controller
 {
     public function store_attribute(Request $request)
-{
-    try {
-        $optionAttrs = $request->optionAttr;
-        if ($optionAttrs) {
-            foreach ($optionAttrs as $optionAttr) {
-                $attribute = $optionAttr['attribute'];
-                $values = $optionAttr['value'];
-                // Tạo đối tượng ProductAttribute
-                $proAttribute = new ProductAttribute();
-                $proAttribute->product_id = $request->product_id;
-                $proAttribute->attribute_id = $attribute['id'];
-                if ($proAttribute->save()) { // Lưu vào CSDL thành công
-                    foreach ($values as $value) {
-                        DB::table('db_product_attribute_value')->insert([
-                            'product_attribute_id' => $proAttribute->id,
-                            'attribute_value_id' => $value['attribute_value_id'],
-                            'image' => json_encode($value['image']) // Giả sử bạn muốn lưu JSON cho hình ảnh
-                        ]);
+    {
+        try {
+            $optionAttrs = $request->optionAttr;
+            if ($optionAttrs) {
+                foreach ($optionAttrs as $optionAttr) {
+                    $attribute = $optionAttr['attribute'];
+                    $values = $optionAttr['value'];
+                    // Tạo đối tượng ProductAttribute
+                    $proAttribute = new ProductAttribute();
+                    $proAttribute->product_id = $request->product_id;
+                    $proAttribute->attribute_id = $attribute['id'];
+                    if ($proAttribute->save()) { // Lưu vào CSDL thành công
+                        foreach ($values as $value) {
+                            DB::table('db_product_attribute_value')->insert([
+                                'product_attribute_id' => $proAttribute->id,
+                                'attribute_value_id' => $value['attribute_value_id'],
+                                'image' => json_encode($value['image']) // Giả sử bạn muốn lưu JSON cho hình ảnh
+                            ]);
+                        }
                     }
                 }
+                return response()->json(
+                    [
+                        'status' => true,
+                        'message' => 'Thêm thành công'
+                    ],
+                    200
+                );
+            } else {
+                return response()->json(
+                    [
+                        'status' => false,
+                        'message' => 'Không có dữ liệu optionAttr'
+                    ],
+                    422
+                );
             }
-            return response()->json(
-                [
-                    'status' => true,
-                    'message' => 'Thêm thành công'
-                ],
-                200
-            );
-        } else {
+        } catch (\Exception $e) {
+            // Ghi lại lỗi hoặc xử lý khi cần
+            error_log('Lỗi xử lý: ' . $e->getMessage());
+            // Thêm phần xử lý lỗi chi tiết ở đây nếu cần
             return response()->json(
                 [
                     'status' => false,
-                    'message' => 'Không có dữ liệu optionAttr'
+                    'message' => 'Lỗi hệ thống: ' . $e->getMessage()
                 ],
-                422
+                500
             );
         }
-    } catch (\Exception $e) {
-        // Ghi lại lỗi hoặc xử lý khi cần
-        error_log('Lỗi xử lý: ' . $e->getMessage());
-        // Thêm phần xử lý lỗi chi tiết ở đây nếu cần
-        return response()->json(
-            [
-                'status' => false,
-                'message' => 'Lỗi hệ thống: ' . $e->getMessage()
-            ],
-            500
-        );
     }
-}
 
     public function action_trash(Request $request)
     {
@@ -88,7 +88,8 @@ class AttributeController extends Controller
 
     public function trash(Request $condition)
     {
-        $query = Attribute::orderBy('created_at', 'DESC')
+        $query = Attribute::where('status','=', 0)
+        ->orderBy('created_at', 'DESC')
             ->select('id', 'name' );
         if ($condition->input('keySearch') != null ) {
             $key = $condition->input('keySearch');
@@ -96,7 +97,7 @@ class AttributeController extends Controller
                 $query->where('db_attribute.name', 'like', '%' . $key . '%');
             });
         }
-        $total = $query->count();
+        $total = Attribute::where('status','!=', 0)->count();
         $attributes = $query->paginate(5);
         $result = [
             'status' => true, 
@@ -109,7 +110,8 @@ class AttributeController extends Controller
 
     public function index(Request $condition)
     {
-        $query = Attribute::orderBy('created_at', 'DESC')
+        $query = Attribute::where('status','!=', 0)
+        ->orderBy('created_at', 'DESC')
         ->select('id', 'name');
         if ($condition->input('keySearch') != null ) {
             $key = $condition->input('keySearch');
@@ -120,12 +122,14 @@ class AttributeController extends Controller
         $attributesAll = $query->get(); 
         $total = $query->count();
         $attributes = $query->paginate(5);
+        $trash = Attribute::where('status', '=', 0)->count();
         $result = [
             'status' => true, 
             'message' => 'Tải dữ liệu thành công',
             'attributes' => $attributes,
             'total' => $total,
             'attributesAll' => $attributesAll,
+            'trash' => $trash,
         ];
         return response()->json($result,200);
 
@@ -150,24 +154,8 @@ class AttributeController extends Controller
     {
         $attribute = new attribute();
         $attribute->name = $request->name; //form
-        $attribute->slug = Str::of($request->name)->slug('-');
-        //upload image
-        $files = $request->image;
-        if ($files != null) {
-            $extension = $files->getClientOriginalExtension();
-            if (in_array($extension, ['jpg', 'png', 'gif', 'webp', 'jpeg'])) {
-                $filename = date('YmdHis') . '.' . $extension;
-                $attribute->image = $filename;
-                $files->move(public_path('images/attribute'), $filename);
-            }
-        }
-        //
-        $attribute->sort_order = $request->sort_order; //form
-        $attribute->metakey = $request->metakey; //form
-        $attribute->metadesc = $request->metadesc; //form
         $attribute->created_at = Carbon::now('Asia/Ho_Chi_Minh');
         $attribute->created_by = 1;
-        $attribute->status = $request->status; //form
         if($attribute->save())//Luuu vao CSDL
         {
             return response()->json(
@@ -206,24 +194,8 @@ class AttributeController extends Controller
             );    
         }
         $attribute->name = $request->name; //form
-        $attribute->slug = Str::of($request->name)->slug('-');
-        //upload image
-        $files = $request->image;
-        if ($files != null) {
-            $extension = $files->getClientOriginalExtension();
-            if (in_array($extension, ['jpg', 'png', 'gif', 'webp', 'jpeg'])) {
-                $filename = date('YmdHis') . '.' . $extension;
-                $attribute->image = $filename;
-                $files->move(public_path('images/attribute'), $filename);
-            }
-        }
-        //
-        $attribute->sort_order = $request->sort_order; //form
-        $attribute->metakey = $request->metakey; //form
-        $attribute->metadesc = $request->metadesc; //form
         $attribute->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $attribute->updated_by = 1;
-        $attribute->status = $request->status; //form
         if($attribute->save())//Luuu vao CSDL
         {
             return response()->json(
@@ -264,7 +236,7 @@ class AttributeController extends Controller
         $attribute->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
         $attribute->updated_by = 1;
         $attribute->status = 0; 
-        if($attribute->save())//Luuu vao CSDL
+        if($attribute->save())
         {
             return response()->json(
                 [

@@ -37,23 +37,24 @@ class AttributeValueController extends Controller
     public function trash(Request $condition)
     {
         $query = AttributeValue::where('status', '=', 0)
-            ->orderBy('created_at', 'DESC')
+            ->where('attribute_id', '=', $condition['attributeId'])
+            // ->orderBy('created_at', 'DESC')
             ->select('id', 'name', 'slug', 'status', 'image' );
         if ($condition->input('keySearch') != null ) {
             $key = $condition->input('keySearch');
             $query->where(function ($query) use ($key) {
-                $query->where('db_brand.name', 'like', '%' . $key . '%');
+                $query->where('db_attributeValue.name', 'like', '%' . $key . '%');
             });
         }
         $total = AttributeValue::where('status', '!=', 0)->count();
-        $brands = $query->paginate(5);
-        $total = $brands->total();
+        $attributeValues = $query->paginate(5);
+        $total = $attributeValues->total();
         $trash = AttributeValue::where('status', '=', 0)->count();
         $publish = AttributeValue::where('status', '=', 1)->count();
         $result = [
             'status' => true, 
             'message' => 'Tải dữ liệu thành công',
-            'brands' => $brands,
+            'attributeValues' => $attributeValues,
             'total' => $total,
             'publish' => $publish,
             'trash' => $trash,
@@ -64,28 +65,29 @@ class AttributeValueController extends Controller
     public function index(Request $condition)
     {
         $query = AttributeValue::where('status', '!=', 0)
-        ->orderBy('created_at', 'DESC')
-        ->select('id', 'name', 'slug', 'status', 'image' );
+        ->where('attribute_id', '=', $condition['attributeId'])
+        // ->orderBy('created_at', 'DESC')
+        ->select('id', 'name', 'status' );
         if ($condition->input('keySearch') != null ) {
             $key = $condition->input('keySearch');
             $query->where(function ($query) use ($key) {
-                $query->where('db_brand.name', 'like', '%' . $key . '%');
+                $query->where('db_attributeValue.name', 'like', '%' . $key . '%');
             });
         }
-        $brandsAll = $query->get(); 
+        $attributeValuesAll = $query->get(); 
         $total = $query->count();
-        $brands = $query->paginate(5);
-        $total = $brands->total();
+        $attributeValues = $query->paginate(5);
+        $total = $attributeValues->total();
         $trash = AttributeValue::where('status', '=', 0)->count();
         $publish = AttributeValue::where('status', '=', 1)->count();
         $result = [
             'status' => true, 
             'message' => 'Tải dữ liệu thành công',
-            'brands' => $brands,
+            'attributeValues' => $attributeValues,
             'total' => $total,
             'publish' => $publish,
             'trash' => $trash,
-            'brandsAll' => $brandsAll,
+            'attributeValuesAll' => $attributeValuesAll,
         ];
         return response()->json($result,200);
 
@@ -93,48 +95,33 @@ class AttributeValueController extends Controller
     public function show($id)
     {
         if(is_numeric($id)){
-            $brand = AttributeValue::find($id);        }
+            $attributeValue = AttributeValue::find($id);        }
         else{
-            $brand = AttributeValue::where('slug', $id)->first();
+            $attributeValue = AttributeValue::where('slug', $id)->first();
         }
         
         return response()->json(
             [   'status' => true, 
                 'message' => 'Tải dữ liệu thành công', 
-                'brand' => $brand
+                'attributeValue' => $attributeValue
             ],
             200
         );
     }
     public function store(Request $request)
     {
-        $brand = new Brand();
-        $brand->name = $request->name; //form
-        $brand->slug = Str::of($request->name)->slug('-');
-        //upload image
-        $files = $request->image;
-        if ($files != null) {
-            $extension = $files->getClientOriginalExtension();
-            if (in_array($extension, ['jpg', 'png', 'gif', 'webp', 'jpeg'])) {
-                $filename = date('YmdHis') . '.' . $extension;
-                $brand->image = $filename;
-                $files->move(public_path('images/brand'), $filename);
-            }
-        }
-        //
-        $brand->sort_order = $request->sort_order; //form
-        $brand->metakey = $request->metakey; //form
-        $brand->metadesc = $request->metadesc; //form
-        $brand->created_at = Carbon::now('Asia/Ho_Chi_Minh');
-        $brand->created_by = 1;
-        $brand->status = $request->status; //form
-        if($brand->save())//Luuu vao CSDL
+        $attributeValue = new attributeValue();
+        $attributeValue->name = $request->name; //form
+        $attributeValue->attribute_id = $request->attribute_id;
+        // $attributeValue->created_at = Carbon::now('Asia/Ho_Chi_Minh');
+        // $attributeValue->created_by = 1;
+        if($attributeValue->save())//Luuu vao CSDL
         {
             return response()->json(
                 [
                     'status' => true, 
                     'message' => 'Thành công', 
-                    'brand' => $brand
+                    'attributeValue' => $attributeValue
                 ],
                 201
             );    
@@ -145,7 +132,7 @@ class AttributeValueController extends Controller
                 [
                     'status' => false, 
                     'message' => 'Thêm không thành công', 
-                    'brand' => null
+                    'attributeValue' => null
                 ],
                 422
             );
@@ -153,44 +140,29 @@ class AttributeValueController extends Controller
     }
     public function update(Request $request, $id)
     {
-        $brand = AttributeValue::find($id);
-        if($brand == null)
+        $attributeValue = AttributeValue::find($id);
+        if($attributeValue == null)
         {
             return response()->json(
                 [
                     'status' => false, 
                     'message' => 'Không tìm thấy dữ liệu', 
-                    'brand' => null
+                    'attributeValue' => null
                 ],
                 404
             );    
         }
-        $brand->name = $request->name; //form
-        $brand->slug = Str::of($request->name)->slug('-');
-        //upload image
-        $files = $request->image;
-        if ($files != null) {
-            $extension = $files->getClientOriginalExtension();
-            if (in_array($extension, ['jpg', 'png', 'gif', 'webp', 'jpeg'])) {
-                $filename = date('YmdHis') . '.' . $extension;
-                $brand->image = $filename;
-                $files->move(public_path('images/brand'), $filename);
-            }
-        }
-        //
-        $brand->sort_order = $request->sort_order; //form
-        $brand->metakey = $request->metakey; //form
-        $brand->metadesc = $request->metadesc; //form
-        $brand->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
-        $brand->updated_by = 1;
-        $brand->status = $request->status; //form
-        if($brand->save())//Luuu vao CSDL
+        $attributeValue->name = $request->name; //form
+        $attributeValue->attribute_id = $request->attribute_id;
+        // $attributeValue->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
+        // $attributeValue->updated_by = 1;
+        if($attributeValue->save())//Luuu vao CSDL
         {
             return response()->json(
                 [
                     'status' => true, 
                     'message' => 'Cập nhật dữ liệu thành công', 
-                    'brand' => $brand
+                    'attributeValue' => $attributeValue
                 ],
                 201
             );    
@@ -201,7 +173,7 @@ class AttributeValueController extends Controller
                 [
                     'status' => false, 
                     'message' => 'Cập nhật dữ liệu không thành công', 
-                    'brand' => null
+                    'attributeValue' => null
                 ],
                 422
             );
@@ -209,28 +181,28 @@ class AttributeValueController extends Controller
     }
     public function delete($id)
     {
-        $brand = AttributeValue::find($id);
-        if($brand == null)//Luuu vao CSDL
+        $attributeValue = AttributeValue::find($id);
+        if($attributeValue == null)//Luuu vao CSDL
         {
             return response()->json(
                 [
                     'status' => false, 
                     'message' => 'Đã chuyển vào thùng rác', 
-                    'brand' => null
+                    'attributeValue' => null
                 ],
                 404
             );    
         }
-        $brand->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
-        $brand->updated_by = 1;
-        $brand->status = 0; 
-        if($brand->save())//Luuu vao CSDL
+        $attributeValue->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
+        $attributeValue->updated_by = 1;
+        $attributeValue->status = 0; 
+        if($attributeValue->save())//Luuu vao CSDL
         {
             return response()->json(
                 [
                     'status' => true, 
                     'message' => 'Xoá thành công', 
-                    'brand' => $brand
+                    'attributeValue' => $attributeValue
                 ],
                 201
             );    
@@ -238,28 +210,28 @@ class AttributeValueController extends Controller
     }
     public function restore($id)
     {
-        $brand = AttributeValue::find($id);
-        if($brand == null)//Luuu vao CSDL
+        $attributeValue = AttributeValue::find($id);
+        if($attributeValue == null)//Luuu vao CSDL
         {
             return response()->json(
                 [
                     'status' => false, 
                     'message' => 'Không tìm thấy dữ liệu', 
-                    'brand' => null
+                    'attributeValue' => null
                 ],
                 404
             );    
         }
-        $brand->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
-        $brand->updated_by = 1;
-        $brand->status = 2; 
-        if($brand->save())//Luuu vao CSDL
+        $attributeValue->updated_at = Carbon::now('Asia/Ho_Chi_Minh');
+        $attributeValue->updated_by = 1;
+        $attributeValue->status = 2; 
+        if($attributeValue->save())//Luuu vao CSDL
         {
             return response()->json(
                 [
                     'status' => true, 
                     'message' => 'Khôi phục thành công', 
-                    'brand' => $brand
+                    'attributeValue' => $attributeValue
                 ],
                 201
             );    
@@ -268,25 +240,25 @@ class AttributeValueController extends Controller
 
     public function destroy($id)
     {
-        $brand = AttributeValue::findOrFail($id);
-        if($brand == null)
+        $attributeValue = AttributeValue::findOrFail($id);
+        if($attributeValue == null)
         {
             return response()->json(
                 [
                     'status' => false, 
                     'message' => 'Không tìm thấy dữ liệu', 
-                    'brand' => null
+                    'attributeValue' => null
                 ],
                404 
             );    
         }
-        if($brand->delete())
+        if($attributeValue->delete())
         {
             return response()->json(
                 [
                     'status' => true,
                     'message' => 'Xóa thành công',
-                    'brand' => $brand
+                    'attributeValue' => $attributeValue
                 ],
                 200
             );    
@@ -297,7 +269,7 @@ class AttributeValueController extends Controller
                 [
                     'status' => false,
                     'message' => 'Xóa không thành công',
-                    'brand' => null
+                    'attributeValue' => null
                 ],
                 422
             );    

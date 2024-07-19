@@ -18,6 +18,8 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
+use App\Models\ProductAttributeValue;
+use App\Models\ProductVariant;
 
 class ProductController extends Controller
 {
@@ -1153,7 +1155,7 @@ class ProductController extends Controller
     }
     public function trash(Request $condition)
     {
-        $productstore = ProductStore::where('status', '=', 0)
+        $productstore = ProductStore::where('status', '=', 1)
         ->select('product_id', DB::raw('SUM(qty) as sum_qty_store'))
             ->groupBy('product_id');
         $orderdetail = OrderDetail::select('product_id', DB::raw('SUM(qty) as sum_qty_selled'))
@@ -1161,7 +1163,7 @@ class ProductController extends Controller
                 ->whereNotIn('db_order.status', [5, 6, 7])
                 ->groupBy('product_id');
         $query = Product::where('db_product.status','=', 0)
-            ->joinSub($productstore, 'productstore', function($join){
+            ->leftJoinSub($productstore, 'productstore', function($join){
                 $join->on('db_product.id', '=', 'productstore.product_id');
             })
             ->leftJoin('db_category', 'db_product.category_id', '=', 'db_category.id')
@@ -1489,52 +1491,67 @@ class ProductController extends Controller
                 }
             }
         }
-            // Process and save optionAttr
-            if ($request->isVariant == 1) {
-                if ($request->has('attributeDelete')) {
-                    foreach ($request->attributeDelete as $id) {
-                        $attribute = DB::table('db_product_attribute')->find($id);
-                        if ($attribute) {
-                            DB::table('db_product_attribute')->where('id', $id)->delete();
-                        }
+        // Process and save optionAttr
+        if ($request->isVariant == '1') {
+            if ($request->has('attributeDelete')) {
+                //xóa tất cả variant
+                ProductVariant::where('product_id', '=', $product->id)->delete();
+                foreach ($request->attributeDelete as $id) {
+                    $attribute = DB::table('db_product_attribute')->find($id);
+                    if ($attribute) {
+                        DB::table('db_product_attribute')->where('id', $id)->delete();
                     }
                 }
-                if ($request->has('attributeValueDelete')) {
-                    foreach ($request->attributeValueDelete as $id) {
-                        $attribute = DB::table('db_product_attribute_value')->find($id);
-                        if ($attribute) {
-                            DB::table('db_product_attribute_value')->where('id', $id)->delete();
-                        }
+            }
+            if ($request->has('attributeValueDelete')) {
+                foreach ($request->attributeValueDelete as $id) {
+                    $attribute = DB::table('db_product_attribute_value')->find($id);
+                    if ($attribute) {
+                        DB::table('db_product_attribute_value')->where('id', $id)->delete();
                     }
                 }
-                if ($request->has('attributeValueUpdate')) {
-                    foreach ($request->attributeValueUpdate as $value) {
-                        $attribute = DB::table('db_product_attribute_value')->find($value['id']);
-                        if ($attribute) {
-                            DB::table('db_product_attribute_value')
-                            ->where('id', $id)
-                            ->update(['attribute_value_id' => $value['attribute_value_id']]);
-                        }
+            }
+            if ($request->has('attributeValueUpdate')) {
+                foreach ($request->attributeValueUpdate as $value) {
+                    $attribute = ProductAttributeValue::find($value['id']);
+                    if ($attribute) {
+                        $attribute->update(['attribute_value_id' => $value['attribute_value_id']]);
                     }
                 }
-                if ($request->has('optionAttrs')) {
-                    foreach ($request->optionAttrs as $optionAttr) {
-                        // Create a ProductAttribute object
-                        $proAttribute = new ProductAttribute();
-                        $proAttribute->product_id = $product->id;
-                        $proAttribute->attribute_id = $optionAttr['attribute_id'];
-                        if ($proAttribute->save()) {
-                            foreach ($optionAttr['values'] as $value) {
-                                DB::table('db_product_attribute_value')->insert([
-                                    'product_attribute_id' => $proAttribute->id,
-                                    'attribute_value_id' => $value['attribute_value_id'],
-                                    // 'image' => $value['image'],
-                                ]);
-                            }
+            }
+            if ($request->has('attributeValueAdd')) {
+                foreach ($request->input('attributeValueAdd') as $value) {
+                    $attribute = ProductAttribute::find($value['product_attribute_id']);
+                    if ($attribute) {
+                        DB::table('db_product_attribute_value')->insert([
+                            'product_attribute_id' => $attribute->id,
+                            'attribute_value_id' => $value['attribute_value_id'],
+                            // 'image' => $value['image'],
+                        ]);
+                    }
+                }
+            }
+            
+            if ($request->has('optionAttrs')) {
+                //xóa tất cả variant
+                ProductVariant::where('product_id', '=', $product->id)->delete();
+                foreach ($request->optionAttrs as $optionAttr) {
+                    // Create a ProductAttribute object
+                    $proAttribute = new ProductAttribute();
+                    $proAttribute->product_id = $product->id;
+                    $proAttribute->attribute_id = $optionAttr['attribute_id'];
+                    if ($proAttribute->save()) {
+                        foreach ($optionAttr['values'] as $value) {
+                            DB::table('db_product_attribute_value')->insert([
+                                'product_attribute_id' => $proAttribute->id,
+                                'attribute_value_id' => $value['attribute_value_id'],
+                                // 'image' => $value['image'],
+                            ]);
                         }
                     }
                 }
             }
+        }
 
         if($product->save())//Luuu vao CSDL
         {
@@ -1542,7 +1559,7 @@ class ProductController extends Controller
                 [
                     'status' => true, 
                     'message' => 'Cập nhật dữ liệu thành công', 
-                    'product' => $product
+                    'product' => Product::find($product->id),
                 ],
                 201
             );    
@@ -1619,40 +1636,43 @@ class ProductController extends Controller
     }
     public function destroy($id)
     {
-        $product = Product::findOrFail($id);
-        if($product == null)//Luuu vao CSDL
-        {
+        try {
+            $product = Product::findOrFail($id);
+        } catch (ModelNotFoundException $e) {
             return response()->json(
                 [
                     'status' => false, 
                     'message' => 'Không tìm thấy dữ liệu', 
                     'product' => null
                 ],
-               404 
-            );    
+                404 
+            );
         }
-        if($product->delete())
-        {
-            return response()->json(
-                [
-                    'status' => true,
-                    'message' => 'Xóa thành công',
-                    'product' => $product
-                ],
-                200
-            );    
+
+        $filePathPro = public_path('images/product/' . $product->image);
+        if (file_exists($filePathPro)) {
+            unlink($filePathPro);
         }
-        else
-        {
-            return response()->json(
-                [
-                    'status' => false,
-                    'message' => 'Xóa không thành công',
-                    'product' => null
-                ],
-                422
-            );    
+
+        $proImages = Image::where('product_id', $product->id)->get();
+        foreach ($proImages as $image) {
+            $filePath = public_path('images/pro_image/' . $image->image);
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
+            $image->delete();
         }
+
+        $product->delete();
+
+        return response()->json(
+            [
+                'status' => true,
+                'message' => 'Xóa thành công',
+                'product' => $product
+            ],
+            200
+        );
     }
 
 
