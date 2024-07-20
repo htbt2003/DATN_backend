@@ -462,7 +462,7 @@ class ProductController extends Controller
         }
         $priceMax = Product::max('price');
         $total = $query->count();
-        $products = $query->paginate(8);
+        $products = $query->paginate(9);
         $categories = Category::where('status', '=', '1')
             ->select('id', 'name')
             ->get();
@@ -585,7 +585,7 @@ class ProductController extends Controller
             $query->orderBy('created_at', 'DESC');
         }
         $priceMax = Product::max('price');
-        $products = $query->paginate(8);
+        $products = $query->paginate(9);
         $total = $products->total();
         return response()->json(
             [
@@ -679,7 +679,7 @@ class ProductController extends Controller
             $query->orderBy('created_at', 'DESC');
         }
         $priceMax = Product::max('price');
-        $products = $query->paginate(8);
+        $products = $query->paginate(9);
         $total = $products->total();
         return response()->json(
             [
@@ -774,6 +774,7 @@ class ProductController extends Controller
                 'db_product.slug',
                 'db_product.detail',
                 'db_product.metadesc',
+                'db_product.category_id',
                 'productsale.price_sale',
                 'productsale.sum_qty_sale_selled',
                 'productstore.sum_qty_store',
@@ -815,11 +816,11 @@ class ProductController extends Controller
         }
 
 
-        $product_other = Product::where([['db_product.id', '!=', $product->id],['status', '=', 1]])
+        $product_other = Product::where([['db_product.id', '!=', $product->id],['db_product.status', '=', 1]])
             ->joinSub($productstore, 'productstore', function($join){
                 $join->on('db_product.id', '=', 'productstore.product_id');
             })
-            ->whereIn('category_id', $listid)
+            ->whereIn('db_product.category_id', $listid)
             ->leftJoinSub($productsale, 'productsale', function ($join) {
                 $join->on('db_product.id', '=', 'productsale.product_id');
             })
@@ -849,7 +850,7 @@ class ProductController extends Controller
                 ['status' => true, 
                  'message' => 'Tải dữ liệu thành công', 
                  'product' => $product,
-                 'product_other'=>$product_other
+                 'product_other'=>$product_other,
                 ],
                 200
             );
@@ -1505,8 +1506,14 @@ class ProductController extends Controller
             }
             if ($request->has('attributeValueDelete')) {
                 foreach ($request->attributeValueDelete as $id) {
-                    $attribute = DB::table('db_product_attribute_value')->find($id);
-                    if ($attribute) {
+                    $attributeValue = DB::table('db_product_attribute_value')->find($id);
+                    if ($attributeValue) {
+                         $variantValue = DB::table('db_product_variant_value')->where('product_attribute_value_id', $attributeValue->id)->get();
+                        DB::table('db_product_variant_value')->where('product_attribute_value_id', $attributeValue->id)->delete();
+                        foreach ($variantValue as $item) {
+                            DB::table('db_product_variant')->where('id', $item->product_variant_id)->delete();
+                        }
+                        // $attributeValue->delete();
                         DB::table('db_product_attribute_value')->where('id', $id)->delete();
                     }
                 }

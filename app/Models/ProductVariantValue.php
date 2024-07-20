@@ -25,11 +25,17 @@ class ProductVariantValue extends Model
     protected static function booted()
     {
         static::deleting(function ($productVariantValue) {
-            $productVariantValue->product_attribute_value()->delete();
-        });
-        static::deleting(function ($productVariantValue) {
             $productVariantValue->product_variant()->delete();
         });
     }
+    // protected static function booted()
+    // {
+    //     static::deleting(function ($productVariantValue) {
+    //         $productVariant = $productVariantValue->product_variant;
+    //         // if ($productVariant) {
+    //             $productVariant->delete();
+    //         // }
+    //     });
+    // }
 }
 

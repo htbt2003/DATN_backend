@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\AttributeValue;
+use App\Models\ProductVariantValue;
 
 class ProductAttributeValue extends Model
 {
@@ -20,5 +21,17 @@ class ProductAttributeValue extends Model
     {
         return $this->belongsTo(AttributeValue::class);
     }
+    public function product_variant_values()
+    {
+        return $this->hasMany(ProductVariantValue::class);
+    }
+
+    protected static function booted()
+    {
+        static::deleting(function ($productAttributeValue) {
+            $productAttributeValue->product_variant_values()->delete();
+        });
+    }
+
 }
 
