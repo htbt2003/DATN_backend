@@ -23,10 +23,16 @@ class MenuController extends Controller
             ->orderBy('created_at', 'DESC')
             ->get();
         foreach($menus as $menu){
-            $menu->children = Menu::where('parent_id', $menu->id)
+            $children = Menu::where('parent_id', $menu->id)
                 ->where('status', 1)
                 ->orderBy('created_at', 'DESC')
                 ->get();
+            if(!$children->isEmpty()){
+                $menu->children =  $children;
+            }
+            else{
+                $menu->children = null;
+            }
         }
         if(count($menus)){
             return response()->json(

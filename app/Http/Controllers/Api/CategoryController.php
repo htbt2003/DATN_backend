@@ -20,6 +20,12 @@ class CategoryController extends Controller
             ->orderBy('created_at', 'DESC')
             ->select('id', 'name', 'slug', 'status' )
             ->get();
+        foreach($categories as $category){
+            $category->childrens = Category::where([['parent_id', $category->id], ['status', '=', 1]])
+                ->where('status', 1)
+                ->orderBy('created_at', 'DESC')
+                ->get();
+        }
         return response()->json(
             [
                 'status' => true,
