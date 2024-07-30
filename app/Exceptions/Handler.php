@@ -27,4 +27,18 @@ class Handler extends ExceptionHandler
             //
         });
     }
+    public function render($request, Throwable $exception)
+    {
+        if ($exception instanceof \Illuminate\Validation\ValidationException) {
+            // Tạo phản hồi JSON với thông báo lỗi tùy chỉnh
+            return response()->json([
+                'message' => 'Data was invalid.', // Thông báo lỗi chung
+                'errors' => $exception->errors(), // Các lỗi cụ thể cho từng trường
+            ], 422);
+        }
+
+        // Xử lý các ngoại lệ khác
+        return parent::render($request, $exception);
+    }
+
 }

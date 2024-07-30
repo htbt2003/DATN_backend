@@ -95,11 +95,11 @@ class AttributeValueController extends Controller
     public function show($id)
     {
         if(is_numeric($id)){
-            $attributeValue = AttributeValue::find($id);        }
+            $attributeValue = AttributeValue::find($id);        
+        }
         else{
             $attributeValue = AttributeValue::where('slug', $id)->first();
         }
-        
         return response()->json(
             [   'status' => true, 
                 'message' => 'Tải dữ liệu thành công', 

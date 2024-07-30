@@ -96,8 +96,9 @@ Route::get('reviewProductUser/{product_id}/{user_id}', [ReviewController::class,
 Route::post('review/store', [ReviewController::class, 'store']);
 Route::delete('review/destroy/{id}', [ReviewController::class, 'destroy']);
 
-Route::get('dashboard', [DashboardController::class,'dashboard']);
-
+Route::middleware(['isAPIAdmin'])->group(function() {
+    Route::get('/dashboard', [DashboardController::class, 'dashboard']);
+});
 
 Route::prefix('order')->group(function () {
     Route::get('index', [OrderController::class, 'index']);
@@ -381,11 +382,11 @@ Route::group(['middleware'=>'api', 'prefix' => 'auth'],function(){
     Route::post('refresh', [AuthController::class,'refresh']);
     Route::post('me', [AuthController::class,'me']);
 });
-    // Route::middleware(['auth:sanctum', 'isAPIAdmin'])->group(function() {
-    //     Route::get('checkingAuthenticated', function(){
-    //         return response()->json(['message'=>'You are in', 'status'=>200], 200);
-    //     });
-    // });
+// Route::middleware(['auth:sanctum', 'isAPIAdmin'])->group(function() {
+//     Route::get('checkingAuthenticated', function(){
+//         return response()->json(['message'=>'You are in', 'status'=>200], 200);
+//     });
+// });
     
     // Route::middleware(['auth:sanctum'])->group(function() {
     //     Route::post('logout', [UserController::class, 'logout']);
